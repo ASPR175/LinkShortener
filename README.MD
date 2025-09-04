@@ -1,0 +1,1 @@
+Day1:setup completed beside goth,recharts and zustand

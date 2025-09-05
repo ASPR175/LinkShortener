@@ -1,1 +1,2 @@
-Day1:setup completed beside goth,recharts and zustand
+Day1:setup completed
+Day2:OAuth Backend Completed

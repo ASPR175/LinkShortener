@@ -12,8 +12,11 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/helmet"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v2/middleware/session"
 	"github.com/joho/godotenv"
 )
+
+var store = session.New()
 
 func main() {
 
@@ -28,12 +31,16 @@ func main() {
 	app.Use(logger.New())
 	app.Use(helmet.New())
 	app.Use(cors.New(cors.Config{
-		AllowOrigins:     "https://localhost:3000",
+		AllowOrigins:     "http://localhost:3000",
 		AllowMethods:     "GET,POST,PUT,DELETE,OPTIONS",
 		AllowHeaders:     "Origin, Content-Type, Accept, Authorization",
 		AllowCredentials: true,
 	}))
-
+	app.Use(func(c *fiber.Ctx) error {
+		sess, _ := store.Get(c)
+		c.Locals("session", sess)
+		return c.Next()
+	})
 	routes.AuthRoutes(app)
 	routes.LinkRoutes(app)
 	routes.AnalyticsRoutes(app)

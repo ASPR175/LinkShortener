@@ -5,5 +5,5 @@ import (
 )
 
 func GetAnalytics(c *fiber.Ctx) error {
-
+	return nil
 }

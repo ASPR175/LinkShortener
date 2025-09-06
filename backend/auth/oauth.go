@@ -19,13 +19,13 @@ func InitOAuth() {
 		google.New(
 			os.Getenv("OAUTH_GOOGLE_CLIENT_ID"),
 			os.Getenv("OAUTH_GOOGLE_CLIENT_SECRET"),
-			baseCallback+"/google/callback",
+			baseCallback+"/auth/google/callback",
 			"email", "profile",
 		),
 		github.New(
 			os.Getenv("OAUTH_GITHUB_CLIENT_ID"),
 			os.Getenv("OAUTH_GITHUB_CLIENT_SECRET"),
-			baseCallback+"/github/callback",
+			baseCallback+"/auth/github/callback",
 			"user:email",
 		),
 	)

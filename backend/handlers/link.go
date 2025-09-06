@@ -5,11 +5,11 @@ import (
 )
 
 func ShortenLink(c *fiber.Ctx) error {
-
+	return nil
 }
 func GetLink(c *fiber.Ctx) error {
-
+	return nil
 }
 func DeleteLink(c *fiber.Ctx) error {
-
+	return nil
 }

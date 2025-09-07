@@ -8,9 +8,11 @@ import (
 )
 
 func LinkRoutes(app *fiber.App) {
-	r := app.Group("/urls", middleware.AuthRequired)
+	r := app.Group("/links", middleware.AuthRequired)
 
-	r.Post("/", handlers.ShortenLink)
-	r.Get("/:id", handlers.GetLink)
+	r.Post("/", handlers.ListLink)
+	r.Get("/", handlers.GetLinks)
+	r.Get("/:id", handlers.FetchData)
+	r.Patch("/:id", handlers.UpdateLink)
 	r.Delete("/:id", handlers.DeleteLink)
 }

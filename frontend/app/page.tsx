@@ -1,39 +1,39 @@
 "use client";
-import { useState } from "react";
 
-export default function Home() {
-  const [authData, setAuthData] = useState<any>(null);
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import useUserStore from "@/lib/store";
 
-  const handleLogin = (provider: "google" | "github") => {
-    window.location.href = `http://localhost:8080/auth/${provider}`;
-  };
+export default function LoginPage() {
+  const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
+  const router = useRouter();
+  const setUser = useUserStore((s) => s.setUser);
 
-  
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const userStr = localStorage.getItem("user");
+    if (token && userStr) {
+      setUser(JSON.parse(userStr));
+      router.push("/dashboard"); 
+    }
+  }, [router, setUser]);
+
   return (
-    <main className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white">
-      <h1 className="text-2xl font-bold mb-6">OAuth Tester</h1>
-
-      <div className="flex gap-4">
-        <button
-          onClick={() => handleLogin("google")}
-          className="px-6 py-2 rounded-lg bg-blue-500 hover:bg-blue-600"
-        >
-          Login with Google
-        </button>
-
-        <button
-          onClick={() => handleLogin("github")}
-          className="px-6 py-2 rounded-lg bg-gray-700 hover:bg-gray-800"
-        >
-          Login with GitHub
-        </button>
-      </div>
-
-      {authData && (
-        <pre className="mt-8 bg-gray-800 p-4 rounded-lg text-sm w-[500px] overflow-x-auto">
-          {JSON.stringify(authData, null, 2)}
-        </pre>
-      )}
-    </main>
+    <div className="flex flex-col items-center justify-center h-screen space-y-4">
+      <h1 className="text-xl font-bold">Login</h1>
+      <button
+        className="p-2 border rounded"
+        onClick={() => (window.location.href = `${backendURL}/auth/google`)}
+      >
+        Login with Google
+      </button>
+      <button
+        className="p-2 border rounded"
+        onClick={() => (window.location.href = `${backendURL}/auth/github`)}
+      >
+        Login with GitHub
+      </button>
+    </div>
   );
 }
+

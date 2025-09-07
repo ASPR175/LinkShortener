@@ -1,30 +1,33 @@
 "use client";
-import { useEffect, useState } from "react";
 
-export default function OAuthCallback() {
-  const [authData, setAuthData] = useState<any>(null);
+import { useSearchParams } from "next/navigation";
+import { useEffect } from "react";
+import useUserStore from "@/lib/store";
+
+export default function CallbackPage() {
+  const searchParams = useSearchParams();
+  const setUser = useUserStore((s) => s.setUser);
 
   useEffect(() => {
-    
-    fetch(window.location.href, {
-      credentials: "include",
-    })
-      .then((res) => res.json())
-      .then((data) => setAuthData(data))
-      .catch((err) => console.error(err));
-  }, []);
+    const token = searchParams.get("token");
+    const userStr = searchParams.get("user");
 
-  return (
-    <main className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white">
-      <h1 className="text-xl font-bold">OAuth Callback</h1>
+    if (token && userStr) {
+      try {
+        const user = JSON.parse(decodeURIComponent(userStr));
+        setUser(user); 
+        localStorage.setItem("token", token);
+      } catch (e) {
+        console.error("Failed to parse user:", e);
+      }
+    }
 
-      {authData ? (
-        <pre className="mt-6 bg-gray-800 p-4 rounded-lg text-sm w-[500px] overflow-x-auto">
-          {JSON.stringify(authData, null, 2)}
-        </pre>
-      ) : (
-        <p className="mt-6">Waiting for OAuth response...</p>
-      )}
-    </main>
-  );
+   
+    window.location.href = "/dashboard";
+  }, [searchParams, setUser]);
+
+  return <div>Logging you in...</div>;
 }
+
+
+

@@ -187,14 +187,13 @@ func OAuthCallback(c *fiber.Ctx) error {
 	}
 
 	token, _ := utils.GenerateJWT(existing.Email, existing.Name)
-	return c.JSON(fiber.Map{
-		"user": fiber.Map{
-			"name":       existing.Name,
-			"email":      existing.Email,
-			"avatar_url": existing.AvatarURL,
-		},
-		"token": token,
-	})
+	userJSON, _ := json.Marshal(existing)
+	return c.Redirect(fmt.Sprintf(
+		"http://localhost:3000/auth/callback?token=%s&user=%s",
+		token,
+		url.QueryEscape(string(userJSON)),
+	))
+
 }
 
 func Logout(c *fiber.Ctx) error {

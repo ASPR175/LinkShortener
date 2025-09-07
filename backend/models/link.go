@@ -1,12 +1,18 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
 
 type Link struct {
-	ID        string    `bson:"_id,omitempty"`
-	UserID    string    `bson:"user_id"`
-	Original  string    `bson:"original"`
-	ShortID   string    `bson:"short_id"`
-	Clicks    string    `bson:"clicks"`
-	CreatedAt time.Time `bson:"created_at"`
+	ID          primitive.ObjectID  `bson:"_id,omitempty"`
+	UserID      primitive.ObjectID  `bson:"user_id"`
+	WorkspaceID *primitive.ObjectID `bson:"workspace_id,omitempty"`
+	Original    string              `bson:"original"`
+	ShortID     string              `bson:"short_id"`
+	Domain      string              `bson:"domain"`
+	Clicks      int                 `bson:"clicks"`
+	CreatedAt   time.Time           `bson:"created_at"`
 }

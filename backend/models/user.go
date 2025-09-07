@@ -14,4 +14,5 @@ type User struct {
 	Email      string             `bson:"email"`
 	AvatarURL  string             `bson:"avatar_url"`
 	CreatedAt  time.Time          `bson:"created_at"`
+	Plan       string             `bson:"plan"`
 }

@@ -44,7 +44,6 @@ func main() {
 	routes.AuthRoutes(app)
 	routes.LinkRoutes(app)
 	routes.ClickEventRoutes(app)
-	routes.CustomdomainRoutes(app)
 	routes.ApikeyRoutes(app)
 	routes.WorkspaceRoutes(app)
 	port := os.Getenv("PORT")

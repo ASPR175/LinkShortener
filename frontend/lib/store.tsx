@@ -6,6 +6,7 @@ type User = {
   Name:string
   Email: string;
   AvatarURL: string;
+  token:string
 };
 
 type Store = {

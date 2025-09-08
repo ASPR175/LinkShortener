@@ -12,7 +12,6 @@ type Link struct {
 	WorkspaceID *primitive.ObjectID `bson:"workspace_id,omitempty"`
 	Original    string              `bson:"original"`
 	ShortID     string              `bson:"short_id"`
-	Domain      string              `bson:"domain"`
 	Clicks      int                 `bson:"clicks"`
 	CreatedAt   time.Time           `bson:"created_at"`
 }

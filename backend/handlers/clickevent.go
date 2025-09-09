@@ -7,3 +7,6 @@ import (
 func GetClickEvents(c *fiber.Ctx) error {
 	return nil
 }
+func GetAnalytics(c *fiber.Ctx) error {
+	return nil
+}

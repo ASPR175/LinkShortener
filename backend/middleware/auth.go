@@ -8,6 +8,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func AuthRequired(c *fiber.Ctx) error {
@@ -41,7 +42,16 @@ func AuthRequired(c *fiber.Ctx) error {
 	if float64(time.Now().Unix()) > claims["exp"].(float64) {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Token expired"})
 	}
+	userIDStr, ok := claims["user_id"].(string)
+	if !ok {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid user_id in token"})
+	}
 
-	c.Locals("user", claims)
+	userID, err := primitive.ObjectIDFromHex(userIDStr)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid user_id format"})
+	}
+
+	c.Locals("user", userID)
 	return c.Next()
 }

@@ -186,7 +186,7 @@ func OAuthCallback(c *fiber.Ctx) error {
 		return c.Status(500).JSON(fiber.Map{"error": "db find failed"})
 	}
 
-	token, _ := utils.GenerateJWT(existing.Email, existing.Name)
+	token, _ := utils.GenerateJWT(existing.ID, existing.Email, existing.Name)
 	userJSON, _ := json.Marshal(existing)
 	return c.Redirect(fmt.Sprintf(
 		"http://localhost:3000/auth/callback?token=%s&user=%s",

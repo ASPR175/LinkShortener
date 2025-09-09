@@ -43,6 +43,7 @@ func main() {
 	})
 	routes.AuthRoutes(app)
 	routes.LinkRoutes(app)
+	routes.Redirect(app)
 	routes.ClickEventRoutes(app)
 	routes.ApikeyRoutes(app)
 	routes.WorkspaceRoutes(app)

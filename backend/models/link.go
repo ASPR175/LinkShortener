@@ -14,4 +14,5 @@ type Link struct {
 	ShortID     string              `bson:"short_id"`
 	Clicks      int                 `bson:"clicks"`
 	CreatedAt   time.Time           `bson:"created_at"`
+	UpdatedAt   time.Time           `bson:"updated_at"`
 }

@@ -22,6 +22,9 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
+	github.com/mssola/user_agent v0.6.0 // indirect
+	github.com/oschwald/geoip2-golang/v2 v2.0.0-beta.4 // indirect
+	github.com/oschwald/maxminddb-golang/v2 v2.0.0-beta.9 // indirect
 	github.com/redis/go-redis/v9 v9.13.0 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/shareed2k/goth_fiber v0.3.2 // indirect
@@ -37,6 +40,6 @@ require (
 	golang.org/x/crypto v0.35.0 // indirect
 	golang.org/x/oauth2 v0.30.0 // indirect
 	golang.org/x/sync v0.11.0 // indirect
-	golang.org/x/sys v0.30.0 // indirect
+	golang.org/x/sys v0.35.0 // indirect
 	golang.org/x/text v0.22.0 // indirect
 )

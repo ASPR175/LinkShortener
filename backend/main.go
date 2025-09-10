@@ -7,6 +7,7 @@ import (
 	"linkshortener/auth"
 	"linkshortener/db"
 	"linkshortener/routes"
+	"linkshortener/utils"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -19,7 +20,7 @@ import (
 var store = session.New()
 
 func main() {
-
+	utils.InitGeoIP()
 	if err := godotenv.Load(); err != nil {
 		log.Println("No .env file found, relying on system env vars")
 	}

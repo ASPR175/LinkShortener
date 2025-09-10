@@ -1,15 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import useUserStore from "@/lib/store";
+import useAppStore from "@/lib/store";
 
 
 
 
 export default function Navbar() {
-  const user = useUserStore((s) => s.user);
-  const setUser = useUserStore((s) => s.setUser);
-  const clearUser = useUserStore((s) => s.clearUser); 
+  const user = useAppStore((s) => s.user);
+  const setUser = useAppStore((s) => s.setUser);
+  const clearUser = useAppStore((s) => s.clearUser); 
   const [open, setOpen] = useState(false);
  
   const handleLogout = async () => {

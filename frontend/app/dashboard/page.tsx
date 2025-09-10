@@ -2,10 +2,10 @@
 
 import Sidebar from "@/components/sidebar";
 import Navbar from "@/components/navbar";
-import useUserStore from "@/lib/store";
+import useAppStore from "@/lib/store";
 
 export default function DashboardPage() {
-  const user = useUserStore((s) => s.user);
+  const user = useAppStore((s) => s.user);
 
   if (!user) return <div>Please login first</div>;
 

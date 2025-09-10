@@ -3,10 +3,10 @@
 
 import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import useUserStore from "@/lib/store";
+import useAppStore from "@/lib/store";
 
 export default function AuthCallbackPage() {
-  const setUser = useUserStore((s) => s.setUser);
+  const setUser = useAppStore((s) => s.setUser);
   const router = useRouter();
   const searchParams = useSearchParams();
 

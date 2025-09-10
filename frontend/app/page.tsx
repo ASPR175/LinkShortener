@@ -2,12 +2,12 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import useUserStore from "@/lib/store";
+import useAppStore from "@/lib/store";
 
 export default function LoginPage() {
   const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
   const router = useRouter();
-  const setUser = useUserStore((s) => s.setUser);
+  const setUser = useAppStore((s) => s.setUser);
 
   useEffect(() => {
     const token = localStorage.getItem("token");

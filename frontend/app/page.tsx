@@ -1,39 +1,60 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import useAppStore from "@/lib/store";
-
-export default function LoginPage() {
-  const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
-  const router = useRouter();
-  const setUser = useAppStore((s) => s.setUser);
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    const userStr = localStorage.getItem("user");
-    if (token && userStr) {
-      setUser(JSON.parse(userStr));
-      router.push("/dashboard"); 
-    }
-  }, [router, setUser]);
-
+export default function HomePage() {
   return (
-    <div className="flex flex-col items-center justify-center h-screen space-y-4">
-      <h1 className="text-xl font-bold">Login</h1>
-      <button
-        className="p-2 border rounded"
-        onClick={() => (window.location.href = `${backendURL}/auth/google`)}
-      >
-        Login with Google
-      </button>
-      <button
-        className="p-2 border rounded"
-        onClick={() => (window.location.href = `${backendURL}/auth/github`)}
-      >
-        Login with GitHub
-      </button>
+    <div className="flex flex-col min-h-screen bg-gradient-to-b from-white to-gray-50">
+      
+      <nav className="flex justify-between items-center px-6 py-4 shadow-sm">
+        <h1 className="text-2xl font-bold">Linkly</h1>
+        <a
+          href="/login"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
+        >
+          Get Started
+        </a>
+      </nav>
+
+      
+      <main className="flex flex-col items-center justify-center flex-1 text-center px-6">
+        <h2 className="text-4xl md:text-6xl font-extrabold mb-6">
+          Shorten. Track. Analyze. 🚀
+        </h2>
+        <p className="text-lg text-gray-600 max-w-2xl mb-8">
+          A modern open-source link shortener with analytics, workspaces, and
+          team collaboration. Built with Fiber, Next.js, and MongoDB.
+        </p>
+
+        <div className="flex space-x-4">
+         
+          <a
+            href="https://github.com/ASPR175/LinkShortener"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-4 py-2 border rounded-lg shadow hover:bg-gray-100 transition"
+          >
+            View on GitHub
+          </a>
+
+          
+          <a
+            href="/login"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
+          >
+            Get Started
+          </a>
+        </div>
+      </main>
+
+      
+      <footer className="text-center text-gray-500 text-sm py-6">
+        © {new Date().getFullYear()} Linkly. Made with ❤️ by Atharva.
+      </footer>
     </div>
   );
 }
+
 

@@ -1,12 +1,11 @@
-
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 type User = {
-  Name:string
+  Name: string;
   Email: string;
   AvatarURL: string;
-  token:string
+  token: string;
 };
 
 type Link = {
@@ -14,9 +13,9 @@ type Link = {
   short_id: string;
   original: string;
   clicks: number;
-  createdAt: string;
-  updatedAt?: string;
-  workspace_id?: string | null; 
+  created_at: string;
+  updated_at?: string;
+  workspace_id?: string | null;
 };
 
 type Analytics = {
@@ -30,11 +29,12 @@ type Analytics = {
 type Store = {
   user: User | null;
   links: Link[];
-  analytics: Record<string, Analytics>; 
+  analytics: Record<string, Analytics>;
+
   setUser: (user: User) => void;
   clearUser: () => void;
 
-  setLinks: (links: Link[]) => void;
+  setLinks: (links: Link[] | unknown) => void;
   addLink: (link: Link) => void;
   removeLink: (id: string) => void;
   updateLink: (id: string, newData: Partial<Link>) => void;
@@ -45,7 +45,7 @@ type Store = {
 
 const useAppStore = create<Store>()(
   persist(
-   (set) => ({
+    (set) => ({
       user: null,
       links: [],
       analytics: {},
@@ -53,18 +53,27 @@ const useAppStore = create<Store>()(
       setUser: (user) => set({ user }),
       clearUser: () => set({ user: null, links: [], analytics: {} }),
 
-      setLinks: (links) => set({ links }),
-     addLink: (link) =>
-  set((state) => ({
-    links: state.links.some((l) => l._id === link._id)
-      ? state.links.map((l) => (l._id === link._id ? link : l))
-      : [...state.links, link],
-  })),
+      setLinks: (links) =>
+        set({
+          links: Array.isArray(links) ? links : [],
+        }),
+
+      addLink: (link) =>
+        set((state) => ({
+          links: state.links.some((l) => l._id === link._id)
+            ? state.links.map((l) => (l._id === link._id ? link : l))
+            : [...state.links, link],
+        })),
 
       removeLink: (id) =>
-        set((state) => ({
-          links: state.links.filter((l) => l._id !== id),
-        })),
+        set((state) => {
+          const { [id]: _, ...restAnalytics } = state.analytics;
+          return {
+            links: state.links.filter((l) => l._id !== id),
+            analytics: restAnalytics,
+          };
+        }),
+
       updateLink: (id, newData) =>
         set((state) => ({
           links: state.links.map((l) =>
@@ -76,15 +85,17 @@ const useAppStore = create<Store>()(
         set((state) => ({
           analytics: { ...state.analytics, [linkId]: data },
         })),
+
       clearAnalytics: () => set({ analytics: {} }),
     }),
     {
-      name: "user-storage", 
+      name: "user-storage",
     }
   )
 );
 
 export default useAppStore;
+
 
 
 

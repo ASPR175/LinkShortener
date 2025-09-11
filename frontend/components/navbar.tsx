@@ -12,23 +12,30 @@ export default function Navbar() {
   const clearUser = useAppStore((s) => s.clearUser); 
   const [open, setOpen] = useState(false);
  
-  const handleLogout = async () => {
-    try {
-      await fetch("http://localhost:8080/auth/logout", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${user?.token}`,
-        },
-      });
+const handleLogout = async () => {
+  try {
+    await fetch("http://localhost:8080/auth/logout", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${user?.token}`,
+      },
+    });
 
-      
-      clearUser();
-    
-      window.location.href = "/";
-    } catch (err) {
-      console.error("Logout failed:", err);
-    }
-  };
+    clearUser();
+
+ 
+    window.open("", "_self");
+    window.close();
+
+   
+    setTimeout(() => {
+      window.location.href = "/logout";
+    }, 300);
+  } catch (err) {
+    console.error("Logout failed:", err);
+  }
+};
+
 
   return (
     <div className="w-full p-4 border-b flex justify-end items-center relative">

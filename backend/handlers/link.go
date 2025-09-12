@@ -32,7 +32,11 @@ func CreateLink(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to generate id"})
 	}
 
-	claims := c.Locals("user").(jwt.MapClaims)
+	claims, ok := c.Locals("user").(jwt.MapClaims)
+	if !ok {
+		return c.Status(401).JSON(fiber.Map{"error": "invalid auth context"})
+	}
+
 	userIDStr := claims["user_id"].(string)
 	userID, _ := primitive.ObjectIDFromHex(userIDStr)
 
@@ -75,7 +79,11 @@ func CreateLink(c *fiber.Ctx) error {
 }
 
 func GetLinks(c *fiber.Ctx) error {
-	claims := c.Locals("user").(jwt.MapClaims)
+	claims, ok := c.Locals("user").(jwt.MapClaims)
+	if !ok {
+		return c.Status(401).JSON(fiber.Map{"error": "invalid auth context"})
+	}
+
 	userIDStr := claims["user_id"].(string)
 	userID, _ := primitive.ObjectIDFromHex(userIDStr)
 
@@ -114,7 +122,11 @@ func GetLinks(c *fiber.Ctx) error {
 }
 
 func FetchData(c *fiber.Ctx) error {
-	claims := c.Locals("user").(jwt.MapClaims)
+	claims, ok := c.Locals("user").(jwt.MapClaims)
+	if !ok {
+		return c.Status(401).JSON(fiber.Map{"error": "invalid auth context"})
+	}
+
 	userIDStr := claims["user_id"].(string)
 	userID, _ := primitive.ObjectIDFromHex(userIDStr)
 
@@ -146,7 +158,11 @@ func FetchData(c *fiber.Ctx) error {
 }
 
 func UpdateLink(c *fiber.Ctx) error {
-	claims := c.Locals("user").(jwt.MapClaims)
+	claims, ok := c.Locals("user").(jwt.MapClaims)
+	if !ok {
+		return c.Status(401).JSON(fiber.Map{"error": "invalid auth context"})
+	}
+
 	userIDStr := claims["user_id"].(string)
 	userID, _ := primitive.ObjectIDFromHex(userIDStr)
 
@@ -193,7 +209,11 @@ func UpdateLink(c *fiber.Ctx) error {
 }
 
 func DeleteLink(c *fiber.Ctx) error {
-	claims := c.Locals("user").(jwt.MapClaims)
+	claims, ok := c.Locals("user").(jwt.MapClaims)
+	if !ok {
+		return c.Status(401).JSON(fiber.Map{"error": "invalid auth context"})
+	}
+
 	userIDStr := claims["user_id"].(string)
 	userID, _ := primitive.ObjectIDFromHex(userIDStr)
 

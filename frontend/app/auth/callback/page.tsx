@@ -1,45 +1,26 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import useAppStore from "@/lib/store";
 
 export default function AuthCallbackPage() {
   const setUser = useAppStore((s) => s.setUser);
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [status, setStatus] = useState("Logging you in...");
-  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    setHydrated(true); 
-  }, []);
-  useEffect(() => {
-    if(!hydrated){
-      return 
-    }
-    const token = searchParams.get("token");
-    const userStr = searchParams.get("user");
+ 
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+    const userStr = params.get("user");
 
     if (token && userStr) {
       try {
         const parsedUser = JSON.parse(decodeURIComponent(userStr));
-
-        
-        let avatar = parsedUser.AvatarURL;
-        if (avatar) {
-          try {
-            avatar = decodeURIComponent(avatar);
-          } catch {
-            
-          }
-        }
-
-        const userData = { ...parsedUser, AvatarURL: avatar, token };
-
+        const userData = { ...parsedUser, token };
         setUser(userData);
         localStorage.setItem("user", JSON.stringify(userData));
-
         setStatus("Redirecting to dashboard...");
         router.replace("/dashboard");
       } catch (err) {
@@ -48,10 +29,11 @@ export default function AuthCallbackPage() {
         setTimeout(() => router.replace("/"), 1500);
       }
     } else {
+      console.warn("Missing token or user in callback URL");
       setStatus("Missing credentials. Redirecting...");
       setTimeout(() => router.replace("/"), 1500);
     }
-  }, [searchParams, router, setUser]);
+  }, [router, setUser]);
 
   return (
     <div className="flex h-screen items-center justify-center">
@@ -62,6 +44,7 @@ export default function AuthCallbackPage() {
     </div>
   );
 }
+
 
 
 

@@ -97,6 +97,7 @@ console.log("Token being sent:", user?.token);
   const handleUpdate = async (id: string) => {
     if (!editValue.trim() || !user) return;
     try {
+      console.log(id)
       const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/links/${id}`, {
         method: "PATCH",
         headers: {
@@ -116,7 +117,7 @@ console.log("Token being sent:", user?.token);
   };
 
   if (!hydrated) return <div>Loading...</div>; 
-
+   
   const safeLinks = Array.isArray(links) ? links : [];
 
   return (

@@ -1,6 +1,9 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+
+
+
 type User = {
   Name: string;
   Email: string;
@@ -34,14 +37,27 @@ type Store = {
   setUser: (user: User) => void;
   clearUser: () => void;
 
-  setLinks: (links: Link[] | unknown) => void;
-  addLink: (link: Link) => void;
+  setLinks: (links: any[]) => void;
+  addLink: (link: any) => void;
   removeLink: (id: string) => void;
-  updateLink: (id: string, newData: Partial<Link>) => void;
+  updateLink: (id: string, newData: any) => void;
 
   setAnalytics: (linkId: string, data: Analytics) => void;
   clearAnalytics: () => void;
 };
+
+
+function normalizeLink(apiLink: any): Link {
+  return {
+    _id: apiLink._id ?? apiLink.ID ?? "",
+    short_id: apiLink.short_id ?? apiLink.ShortID ?? "",
+    original: apiLink.original ?? apiLink.Original ?? "",
+    clicks: apiLink.clicks ?? apiLink.Clicks ?? 0,
+    created_at: apiLink.created_at ?? apiLink.CreatedAt ?? new Date().toISOString(),
+    updated_at: apiLink.updated_at ?? apiLink.updatedAt ?? undefined,
+    workspace_id: apiLink.workspace_id ?? apiLink.WorkspaceID ?? null,
+  };
+}
 
 const useAppStore = create<Store>()(
   persist(
@@ -50,20 +66,27 @@ const useAppStore = create<Store>()(
       links: [],
       analytics: {},
 
+      
       setUser: (user) => set({ user }),
       clearUser: () => set({ user: null, links: [], analytics: {} }),
 
+  
       setLinks: (links) =>
         set({
-          links: Array.isArray(links) ? links : [],
+          links: Array.isArray(links) ? links.map((l) => normalizeLink(l)) : [],
         }),
 
       addLink: (link) =>
-        set((state) => ({
-          links: state.links.some((l) => l._id === link._id)
-            ? state.links.map((l) => (l._id === link._id ? link : l))
-            : [...state.links, link],
-        })),
+        set((state) => {
+          const normalized = normalizeLink(link);
+          return {
+            links: state.links.some((l) => l._id === normalized._id)
+              ? state.links.map((l) =>
+                  l._id === normalized._id ? normalized : l
+                )
+              : [...state.links, normalized],
+          };
+        }),
 
       removeLink: (id) =>
         set((state) => {
@@ -77,10 +100,11 @@ const useAppStore = create<Store>()(
       updateLink: (id, newData) =>
         set((state) => ({
           links: state.links.map((l) =>
-            l._id === id ? { ...l, ...newData } : l
+            l._id === id ? { ...l, ...normalizeLink(newData) } : l
           ),
         })),
 
+      
       setAnalytics: (linkId, data) =>
         set((state) => ({
           analytics: { ...state.analytics, [linkId]: data },
@@ -95,7 +119,3 @@ const useAppStore = create<Store>()(
 );
 
 export default useAppStore;
-
-
-
-

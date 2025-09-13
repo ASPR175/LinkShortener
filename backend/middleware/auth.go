@@ -9,7 +9,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	// "go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func AuthRequired(c *fiber.Ctx) error {
@@ -59,20 +59,7 @@ func AuthRequired(c *fiber.Ctx) error {
 		})
 	}
 
-	userIDStr, ok := claims["user_id"].(string)
-	if !ok {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "Invalid user_id in token",
-		})
-	}
-
-	userID, err := primitive.ObjectIDFromHex(userIDStr)
-	if err != nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "Invalid user_id format",
-		})
-	}
-
 	c.Locals("user", claims)
+
 	return c.Next()
 }

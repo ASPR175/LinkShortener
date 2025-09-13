@@ -11,8 +11,6 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/gofiber/fiber/v2/middleware/helmet"
-	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/session"
 	"github.com/joho/godotenv"
 )
@@ -29,11 +27,10 @@ func main() {
 	db.InitRedis()
 	auth.InitOAuth()
 	app := fiber.New()
-	app.Use(logger.New())
-	app.Use(helmet.New())
+
 	app.Use(cors.New(cors.Config{
 		AllowOrigins:     "http://localhost:3000",
-		AllowMethods:     "GET,POST,PUT,DELETE,OPTIONS",
+		AllowMethods:     "GET, POST, HEAD, PUT, DELETE, PATCH, OPTIONS",
 		AllowHeaders:     "Origin, Content-Type, Accept, Authorization",
 		AllowCredentials: true,
 	}))
@@ -50,7 +47,7 @@ func main() {
 	routes.WorkspaceRoutes(app)
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "3000"
+		port = "8080"
 	}
 
 	log.Println("Server running on port " + port)

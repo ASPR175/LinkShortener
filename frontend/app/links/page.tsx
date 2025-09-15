@@ -60,61 +60,75 @@ console.log("Token being sent:", user?.token);
     fetchLinks();
   }, [hydrated, user, setLinks]);
 
-  const handleCreate = async () => {
-    if (!newLink.trim() || !user) return;
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/links`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${user.token}`,
-        },
-        body: JSON.stringify({ original: newLink }),
-      });
-      if (!res.ok) throw new Error("Create failed");
-      const data: Link = await res.json();
-      addLink(data);
-      setNewLink("");
-    } catch (err: any) {
-      setError(err.message || "Failed to create link");
-    }
-  };
+const handleCreate = async () => {
+  if (!newLink.trim() || !user) return;
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/links`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${user.token}`,
+      },
+      body: JSON.stringify({ original: newLink }),
+    });
+    if (!res.ok) throw new Error("Create failed");
+    const data: Link = await res.json();
 
-  const handleDelete = async (id: string) => {
+    
+    const cleanLink = {
+      ...data,
+      short_id: data.short_id.replace(`${process.env.NEXT_PUBLIC_BACKEND_URL}/`, ""),
+    };
+
+    addLink(cleanLink);
+    setNewLink("");
+  } catch (err: any) {
+    setError(err.message || "Failed to create link");
+  }
+};
+
+
+  const handleDelete = async (_id: string) => {
     if (!user) return;
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/links/${id}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/links/${_id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${user.token}` },
       });
       if (!res.ok) throw new Error("Delete failed");
-      removeLink(id);
+      removeLink(_id);
     } catch (err: any) {
       setError(err.message || "Failed to delete link");
     }
   };
 
-  const handleUpdate = async (id: string) => {
-    if (!editValue.trim() || !user) return;
-    try {
-      console.log(id)
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/links/${id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${user.token}`,
-        },
-        body: JSON.stringify({ original: editValue }),
-      });
-      if (!res.ok) throw new Error("Update failed");
-      const data: Link = await res.json();
-      updateLink(id, data);
-      setEditingId(null);
-      setEditValue("");
-    } catch (err: any) {
-      setError(err.message || "Failed to update link");
-    }
-  };
+const handleUpdate = async (_id: string) => {
+  if (!editValue.trim() || !user) return;
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/links/${_id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${user.token}`,
+      },
+      body: JSON.stringify({ original: editValue }),
+    });
+    if (!res.ok) throw new Error("Update failed");
+
+    
+    const resAll = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/links`, {
+      headers: { Authorization: `Bearer ${user.token}` },
+    });
+    const updatedLinks: Link[] = await resAll.json();
+    setLinks(updatedLinks);
+
+    setEditingId(null);
+    setEditValue("");
+  } catch (err: any) {
+    setError(err.message || "Failed to update link");
+  }
+};
+
 
   if (!hydrated) return <div>Loading...</div>; 
    
@@ -173,7 +187,18 @@ console.log("Token being sent:", user?.token);
                   </div>
                 ) : (
                   <>
-                    <p><strong>Short ID:</strong> {link.short_id}</p>
+<p>
+  <strong>Short URL:</strong>{" "}
+  <a
+    href={`${process.env.NEXT_PUBLIC_BACKEND_URL}/${link.short_id}`}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="text-blue-600 underline"
+  >
+    {`${process.env.NEXT_PUBLIC_BACKEND_URL}/${link.short_id}`}
+  </a>
+</p>
+
                     <p className="truncate"><strong>Original:</strong> {link.original}</p>
                     <p><strong>Clicks:</strong> {link.clicks}</p>
                     <p><strong>Created:</strong> {new Date(link.created_at).toLocaleString()}</p>

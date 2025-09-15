@@ -2,34 +2,12 @@ package handlers
 
 import (
 	"linkshortener/db"
-	"linkshortener/models"
 
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
-
-func GetClickEvents(c *fiber.Ctx) error {
-	linkID, err := primitive.ObjectIDFromHex(c.Params("id"))
-	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "invalid link id"})
-	}
-
-	coll := db.GetCollection("click_events")
-	cursor, err := coll.Find(c.Context(), bson.M{"link_id": linkID})
-	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": "failed to fetch events"})
-	}
-	defer cursor.Close(c.Context())
-
-	var events []models.ClickEvent
-	if err := cursor.All(c.Context(), &events); err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": "decode error"})
-	}
-
-	return c.JSON(events)
-}
 
 func GetAnalytics(c *fiber.Ctx) error {
 	linkID, err := primitive.ObjectIDFromHex(c.Params("id"))

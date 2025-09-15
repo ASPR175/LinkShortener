@@ -71,9 +71,9 @@ func CreateLink(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{
-		"short_url":  os.Getenv("APP_BASE_URL") + "/" + shortID,
+		"_id":        link.ID.Hex(),
+		"short_id":   os.Getenv("APP_BASE_URL") + "/" + shortID,
 		"original":   link.Original,
-		"short_id":   link.ShortID,
 		"created_at": link.CreatedAt,
 	})
 }

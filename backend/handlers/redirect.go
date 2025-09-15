@@ -1,9 +1,13 @@
 package handlers
 
 import (
+	"context"
+
 	"linkshortener/db"
 	"linkshortener/models"
 	"linkshortener/utils"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -13,18 +17,24 @@ import (
 
 func Redirect(c *fiber.Ctx) error {
 	shortID := c.Params("short_id")
+	if shortID == "" {
+		return c.Status(fiber.StatusBadRequest).SendString("Invalid short link.")
+	}
 
 	collection := db.GetCollection("links")
+
 	var link models.Link
 	err := collection.FindOne(c.Context(), bson.M{"short_id": shortID}).Decode(&link)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "link not found"})
+		return c.Status(fiber.StatusNotFound).SendString("This short link does not exist.")
 	}
 
-	_, _ = collection.UpdateOne(c.Context(),
-		bson.M{"_id": link.ID},
-		bson.M{"$inc": bson.M{"clicks": 1}},
-	)
+	go func() {
+		_, _ = collection.UpdateOne(context.Background(),
+			bson.M{"_id": link.ID},
+			bson.M{"$inc": bson.M{"clicks": 1}},
+		)
+	}()
 
 	ip := c.IP()
 	referrer := c.Get("Referer")
@@ -44,8 +54,20 @@ func Redirect(c *fiber.Ctx) error {
 		Device:    device,
 	}
 
-	clickColl := db.GetCollection("click_events")
-	_, _ = clickColl.InsertOne(c.Context(), click)
+	go func() {
+		clickColl := db.GetCollection("click_events")
+		_, _ = clickColl.InsertOne(context.Background(), click)
+	}()
 
-	return c.Redirect(link.Original, fiber.StatusFound)
+	original := link.Original
+	if !strings.HasPrefix(original, "http://") && !strings.HasPrefix(original, "https://") {
+		original = "http://" + original
+	}
+
+	parsedURL, err := url.Parse(original)
+	if err != nil || (parsedURL.Scheme != "http" && parsedURL.Scheme != "https") {
+		return c.Status(fiber.StatusBadRequest).SendString("Invalid redirect target.")
+	}
+
+	return c.Redirect(original, fiber.StatusFound)
 }

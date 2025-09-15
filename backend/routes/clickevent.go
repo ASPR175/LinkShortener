@@ -8,7 +8,6 @@ import (
 )
 
 func ClickEventRoutes(app *fiber.App) {
-	a := app.Group("/clickevent", middleware.AuthRequired)
-	a.Get("/links/:id/events", handlers.GetClickEvents)
-	a.Get("/links/:id/summary", handlers.GetAnalytics)
+	a := app.Group("/links", middleware.AuthRequired)
+	a.Get("/:id/summary", handlers.GetAnalytics)
 }

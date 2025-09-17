@@ -3,7 +3,7 @@ import { useEffect } from "react";
 
 export default function LogoutPage() {
   useEffect(() => {
-    // Attempt to close immediately
+    
     window.open("", "_self");
     window.close();
   }, []);

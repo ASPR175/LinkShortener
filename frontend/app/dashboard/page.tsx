@@ -9,7 +9,7 @@ export default function DashboardPage() {
 
   if (!user) return <div>Please login first</div>;
 
-  console.log("Dashboard user:", user);
+ 
 
   return (
     <div className="flex h-screen">

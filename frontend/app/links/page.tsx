@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import Sidebar from "@/components/sidebar";
 import Navbar from "@/components/navbar";
 import useAppStore from "@/lib/store";
+import { useRouter } from "next/navigation";
+
 
 interface Link {
   _id: string;
@@ -133,7 +135,7 @@ const handleUpdate = async (_id: string) => {
   if (!hydrated) return <div>Loading...</div>; 
    
   const safeLinks = Array.isArray(links) ? links : [];
-
+const router = useRouter();
   return (
     <div className="flex h-screen">
       <Sidebar />
@@ -219,6 +221,12 @@ const handleUpdate = async (_id: string) => {
                       >
                         Delete
                       </button>
+                      <button
+    onClick={() => router.push(`/analytics/${link._id}`)}
+    className="bg-purple-600 text-white px-3 py-1 rounded"
+  >
+    Analytics
+  </button>
                     </div>
                   </>
                 )}

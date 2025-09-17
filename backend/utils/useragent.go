@@ -15,12 +15,12 @@ func ParseUserAgent(ua string) (browser, device string) {
 	if name == "" {
 		name = "Unknown"
 	}
-
+	if uaParser.Bot() {
+		return name, "Bot"
+	}
 	device = "Desktop"
 	if uaParser.Mobile() {
 		device = "Mobile"
-	} else if uaParser.Bot() {
-		device = "Tablet"
 	} else {
 		device = "Desktop"
 	}

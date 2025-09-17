@@ -18,7 +18,7 @@ interface Link {
 }
 
 export default function LinksPage() {
-
+const router = useRouter();
 
   const { user, links, setLinks, addLink, removeLink, updateLink } = useAppStore();
   const [hydrated, setHydrated] = useState(false);
@@ -135,7 +135,7 @@ const handleUpdate = async (_id: string) => {
   if (!hydrated) return <div>Loading...</div>; 
    
   const safeLinks = Array.isArray(links) ? links : [];
-const router = useRouter();
+
   return (
     <div className="flex h-screen">
       <Sidebar />

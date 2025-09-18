@@ -20,10 +20,12 @@ type Link = {
 
 type Analytics = {
   totalClicks: number;
+  uniqueIps:number;
   countryStats: { country: string; count: number }[];
   referrerStats: { referrer: string; count: number }[];
   deviceStats: { device: string; count: number }[];
   browserStats: { browser: string; count: number }[];
+   timestamp: { date: string; count: number ; uniqueClicks: number}[]; 
 };
 
 type Store = {
@@ -102,10 +104,44 @@ const useAppStore = create<Store>()(
         })),
 
       
-      setAnalytics: (linkId, data) =>
-        set((state) => ({
-          analytics: { ...state.analytics, [linkId]: data },
-        })),
+   setAnalytics: (linkId, data: any) =>
+  set((state) => {
+    const normalized: Analytics = {
+      totalClicks: data.total_clicks ?? 0,
+      uniqueIps: data.unique_ips ?? 0,
+
+      countryStats: (data.by_country ?? []).map((c: any) => ({
+        country: c._id || "Unknown",
+        count: c.count ?? 0,
+      })),
+
+      referrerStats: (data.by_referrer ?? []).map((r: any) => ({
+        referrer: r._id || "Direct",
+        count: r.count ?? 0,
+      })),
+
+      deviceStats: (data.by_device ?? []).map((d: any) => ({
+        device: d._id || "Unknown",
+        count: d.count ?? 0,
+      })),
+
+      browserStats: (data.by_browser ?? []).map((b: any) => ({
+        browser: b._id || "Unknown",
+        count: b.count ?? 0,
+      })),
+
+      timestamp: (data.timeseries ?? []).map((t: any) => ({
+        date: t.date || t._id || "",
+        count: t.clicks ?? 0,
+        uniqueClicks: t.uniqueClicks ?? 0,
+      })),
+    };
+
+    return {
+      analytics: { ...state.analytics, [linkId]: normalized },
+    };
+  }),
+
 
       clearAnalytics: () => set({ analytics: {} }),
     }),

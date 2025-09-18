@@ -15,6 +15,7 @@ interface AnalyticsData {
   referrerStats: { referrer: string; count: number }[];
   deviceStats: { device: string; count: number }[];
   browserStats: { browser: string; count: number }[];
+  timestamp: {date: string;count:number; uniqueClicks: number}[];
 }
 
 
@@ -47,7 +48,7 @@ export default function AnalyticsPage() {
   const { user, analytics, setAnalytics } = useAppStore();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
+console.log(analytics)
   useEffect(() => {
     const fetchAnalytics = async () => {
       if (!linkId || !user?.token) {
@@ -84,6 +85,12 @@ export default function AnalyticsPage() {
           referrerStats: data.by_referrer || [],
           deviceStats: data.by_device || [],
           browserStats: data.by_browser || [],
+       timestamp: (data.time_series || []).map((t: any) => ({
+  date: t.date,
+  clicks: t.count,
+  uniqueClicks: t.uniqueClicks,
+})),
+
         };
 
         setAnalytics(linkId, analyticsData);
@@ -99,7 +106,15 @@ export default function AnalyticsPage() {
   }, [linkId, user, setAnalytics]);
 
   const linkAnalytics = analytics[linkId];
-  const timeSeriesData = generateTimeSeriesData(linkAnalytics?.totalClicks || 0);
+console.log(linkAnalytics)
+const timeSeriesData = (linkAnalytics?.timestamp || []).map((t) => ({
+  date: t.date,
+  clicks: t.count,
+  uniqueClicks: t.uniqueClicks,
+}));
+
+
+
 
   if (loading) {
     return (
@@ -153,7 +168,7 @@ export default function AnalyticsPage() {
             
             <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
               <h3 className="text-lg font-semibold text-gray-800 mb-2">Unique Visitors</h3>
-              <p className="text-3xl font-bold text-green-600">{linkAnalytics.totalClicks}</p>
+              <p className="text-3xl font-bold text-green-600">{linkAnalytics.uniqueIps}</p>
             </div>
           </div>
 
@@ -161,29 +176,44 @@ export default function AnalyticsPage() {
           <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-8">
             <h2 className="text-xl font-semibold text-gray-800 mb-4">Clicks Over Time</h2>
             <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={timeSeriesData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line 
-                    type="monotone" 
-                    dataKey="clicks" 
-                    stroke="#8884d8" 
-                    strokeWidth={2}
-                    name="Total Clicks"
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="uniqueClicks" 
-                    stroke="#82ca9d" 
-                    strokeWidth={2}
-                    name="Unique Clicks"
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+            <ResponsiveContainer width="100%" height="100%">
+  <LineChart data={timeSeriesData}>
+    <defs>
+      <linearGradient id="colorClicks" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/>
+        <stop offset="95%" stopColor="#8884d8" stopOpacity={0}/>
+      </linearGradient>
+      <linearGradient id="colorUnique" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8}/>
+        <stop offset="95%" stopColor="#82ca9d" stopOpacity={0}/>
+      </linearGradient>
+    </defs>
+    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+    <XAxis dataKey="date" tick={{ fontSize: 12, fill: "#6b7280" }} />
+    <YAxis tick={{ fontSize: 12, fill: "#6b7280" }} />
+    <Tooltip />
+    <Legend />
+    <Line 
+      type="monotone" 
+      dataKey="clicks" 
+      stroke="#8884d8" 
+      fill="url(#colorClicks)" 
+      strokeWidth={2}
+      dot={false}
+      name="Total Clicks"
+    />
+    <Line 
+      type="monotone" 
+      dataKey="uniqueClicks" 
+      stroke="#82ca9d" 
+      fill="url(#colorUnique)" 
+      strokeWidth={2}
+      dot={false}
+      name="Unique Clicks"
+    />
+  </LineChart>
+</ResponsiveContainer>
+
             </div>
           </div>
 

@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"context"
+	"fmt"
+
 	"time"
 
 	"linkshortener/db"
@@ -55,7 +57,67 @@ func GetAnalytics(c *fiber.Ctx) error {
 		}
 		return out, nil
 	}
+	//
+	timeSeriesPipeline := []bson.M{
+		{"$match": bson.M{"link_id": linkID}},
+		{"$group": bson.M{
+			"_id": bson.M{
+				"date": bson.M{
+					"$dateToString": bson.M{
+						"format": "%Y-%m-%d",
+						"date":   "$timestamp",
+					},
+				},
+				"ip": "$ip",
+			},
+			"count": bson.M{"$sum": 1},
+		}},
 
+		{"$group": bson.M{
+			"_id":          "$_id.date",
+			"clicks":       bson.M{"$sum": "$count"},
+			"uniqueClicks": bson.M{"$sum": 1},
+		}},
+		{"$sort": bson.M{"_id": 1}},
+	}
+
+	cur, err := coll.Aggregate(ctx, timeSeriesPipeline)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to build time series"})
+	}
+	defer cur.Close(ctx)
+
+	var timeSeries []bson.M
+	if err := cur.All(ctx, &timeSeries); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to parse time series"})
+	}
+
+	normalizedTimeSeries := make([]map[string]interface{}, len(timeSeries))
+	for i, t := range timeSeries {
+		date := t["_id"].(string)
+		clicks := 0
+		uniqueClicks := 0
+
+		if c, ok := t["clicks"].(int32); ok {
+			clicks = int(c)
+		} else if c, ok := t["clicks"].(int64); ok {
+			clicks = int(c)
+		}
+
+		if u, ok := t["uniqueClicks"].(int32); ok {
+			uniqueClicks = int(u)
+		} else if u, ok := t["uniqueClicks"].(int64); ok {
+			uniqueClicks = int(u)
+		}
+
+		normalizedTimeSeries[i] = map[string]interface{}{
+			"date":         date,
+			"clicks":       clicks,
+			"uniqueClicks": uniqueClicks,
+		}
+	}
+
+	//
 	byCountry, err := aggregateField("country")
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to aggregate country"})
@@ -72,6 +134,7 @@ func GetAnalytics(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to aggregate referrer"})
 	}
+	fmt.Println(normalizedTimeSeries)
 	return c.JSON(fiber.Map{
 		"total_clicks": total,
 		"unique_ips":   uniqueIPs,
@@ -79,5 +142,6 @@ func GetAnalytics(c *fiber.Ctx) error {
 		"by_referrer":  byReferrer,
 		"by_browser":   byBrowser,
 		"by_device":    byDevice,
+		"timestamp":    normalizedTimeSeries,
 	})
 }

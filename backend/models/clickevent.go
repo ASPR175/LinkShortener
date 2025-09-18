@@ -15,4 +15,5 @@ type ClickEvent struct {
 	Country   string             `bson:"country"`
 	Browser   string             `bson:"browser"`
 	Device    string             `bson:"device"`
+	CreatedAt time.Time          `bson:"created_at"`
 }

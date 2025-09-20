@@ -9,15 +9,14 @@ import Navbar from "@/components/navbar";
 import useAppStore from "@/lib/store";
 
 interface AnalyticsData {
-  totalClicks: number;
-  uniqueIps: number;
-  countryStats: { country: string; count: number }[];
-  referrerStats: { referrer: string; count: number }[];
-  deviceStats: { device: string; count: number }[];
-  browserStats: { browser: string; count: number }[];
-  timestamp: {date: string;count:number; uniqueClicks: number}[];
+  clicks: number;
+  uniqueClicks: number;
+  country: { country: string; count: number }[];
+  referrer: { referrer: string; count: number }[];
+  device: { device: string; count: number }[];
+  browser: { browser: string; count: number }[];
+  timestamp: {date: string;clicks:number; uniqueClicks: number}[];
 }
-
 
 const generateTimeSeriesData = (totalClicks: number) => {
   const data = [];
@@ -48,7 +47,7 @@ export default function AnalyticsPage() {
   const { user, analytics, setAnalytics } = useAppStore();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-console.log(analytics)
+
   useEffect(() => {
     const fetchAnalytics = async () => {
       if (!linkId || !user?.token) {
@@ -79,15 +78,16 @@ console.log(analytics)
         const data = await res.json();
         
         const analyticsData: AnalyticsData = {
-          totalClicks: data.total_clicks || 0,
-          uniqueIps: data.unique_ips || 0,
-          countryStats: data.by_country || [],
-          referrerStats: data.by_referrer || [],
-          deviceStats: data.by_device || [],
-          browserStats: data.by_browser || [],
-       timestamp: (data.time_series || []).map((t: any) => ({
+          clicks: data.clicks || 0,
+          uniqueClicks: data.uniqueClicks || 0,
+          country: data.country || [],
+          referrer: data.referrer || [],
+          device: data.device || [],
+          browser: data.browser || [],
+       timestamp: (data.timestamp || []).map((t: any) => ({
+        
   date: t.date,
-  clicks: t.count,
+  clicks: t.clicks,
   uniqueClicks: t.uniqueClicks,
 })),
 
@@ -106,13 +106,13 @@ console.log(analytics)
   }, [linkId, user, setAnalytics]);
 
   const linkAnalytics = analytics[linkId];
-console.log(linkAnalytics)
+
 const timeSeriesData = (linkAnalytics?.timestamp || []).map((t) => ({
   date: t.date,
-  clicks: t.count,
+  clicks: t.clicks,
   uniqueClicks: t.uniqueClicks,
 }));
-
+console.log(timeSeriesData)
 
 
 
@@ -163,12 +163,12 @@ const timeSeriesData = (linkAnalytics?.timestamp || []).map((t) => ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
               <h3 className="text-lg font-semibold text-gray-800 mb-2">Total Clicks</h3>
-              <p className="text-3xl font-bold text-blue-600">{linkAnalytics.totalClicks}</p>
+              <p className="text-3xl font-bold text-blue-600">{linkAnalytics.clicks}</p>
             </div>
             
             <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
               <h3 className="text-lg font-semibold text-gray-800 mb-2">Unique Visitors</h3>
-              <p className="text-3xl font-bold text-green-600">{linkAnalytics.uniqueIps}</p>
+              <p className="text-3xl font-bold text-green-600">{linkAnalytics.uniqueClicks}</p>
             </div>
           </div>
 
@@ -229,7 +229,7 @@ const timeSeriesData = (linkAnalytics?.timestamp || []).map((t) => ({
                   <span className="text-xl">🌍</span>
                 </div>
                 <h3 className="text-lg font-semibold text-gray-800 mb-2">Countries</h3>
-                <p className="text-gray-600 mb-4">{linkAnalytics.countryStats.length} countries</p>
+                <p className="text-gray-600 mb-4">{linkAnalytics.country.length} countries</p>
                 <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
                   View Details
                 </button>
@@ -246,7 +246,7 @@ const timeSeriesData = (linkAnalytics?.timestamp || []).map((t) => ({
                   <span className="text-xl">🔗</span>
                 </div>
                 <h3 className="text-lg font-semibold text-gray-800 mb-2">Referrers</h3>
-                <p className="text-gray-600 mb-4">{linkAnalytics.referrerStats.length} sources</p>
+                <p className="text-gray-600 mb-4">{linkAnalytics.referrer.length} sources</p>
                 <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
                   View Details
                 </button>
@@ -263,7 +263,7 @@ const timeSeriesData = (linkAnalytics?.timestamp || []).map((t) => ({
                   <span className="text-xl">📱</span>
                 </div>
                 <h3 className="text-lg font-semibold text-gray-800 mb-2">Devices</h3>
-                <p className="text-gray-600 mb-4">{linkAnalytics.deviceStats.length} types</p>
+                <p className="text-gray-600 mb-4">{linkAnalytics.device.length} types</p>
                 <button className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
                   View Details
                 </button>
@@ -280,7 +280,7 @@ const timeSeriesData = (linkAnalytics?.timestamp || []).map((t) => ({
                   <span className="text-xl">🌐</span>
                 </div>
                 <h3 className="text-lg font-semibold text-gray-800 mb-2">Browsers</h3>
-                <p className="text-gray-600 mb-4">{linkAnalytics.browserStats.length} browsers</p>
+                <p className="text-gray-600 mb-4">{linkAnalytics.browser.length} browsers</p>
                 <button className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors">
                   View Details
                 </button>

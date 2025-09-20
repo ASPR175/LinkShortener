@@ -136,12 +136,12 @@ func GetAnalytics(c *fiber.Ctx) error {
 	}
 	fmt.Println(normalizedTimeSeries)
 	return c.JSON(fiber.Map{
-		"total_clicks": total,
-		"unique_ips":   uniqueIPs,
-		"by_country":   byCountry,
-		"by_referrer":  byReferrer,
-		"by_browser":   byBrowser,
-		"by_device":    byDevice,
+		"clicks":       total,
+		"uniqueClicks": uniqueIPs,
+		"country":      byCountry,
+		"referrer":     byReferrer,
+		"browser":      byBrowser,
+		"device":       byDevice,
 		"timestamp":    normalizedTimeSeries,
 	})
 }

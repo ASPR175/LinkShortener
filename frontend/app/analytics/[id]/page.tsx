@@ -11,34 +11,14 @@ import useAppStore from "@/lib/store";
 interface AnalyticsData {
   clicks: number;
   uniqueClicks: number;
-  country: { country: string; count: number }[];
-  referrer: { referrer: string; count: number }[];
-  device: { device: string; count: number }[];
-  browser: { browser: string; count: number }[];
+  country: { country: string; clicks: number }[];
+  referrer: { referrer: string; clicks: number }[];
+  device: { device: string; clicks: number }[];
+  browser: { browser: string; clicks: number }[];
   timestamp: {date: string;clicks:number; uniqueClicks: number}[];
 }
 
-const generateTimeSeriesData = (totalClicks: number) => {
-  const data = [];
-  const now = new Date();
-  
-  for (let i = 30; i >= 0; i--) {
-    const date = new Date(now);
-    date.setDate(date.getDate() - i);
-    
-    
-    const clicks = Math.floor(Math.random() * 20) + 5;
-    const uniqueClicks = Math.floor(clicks * 0.7);
-    
-    data.push({
-      date: date.toLocaleDateString(),
-      clicks: clicks,
-      uniqueClicks: uniqueClicks,
-    });
-  }
-  
-  return data;
-};
+
 
 export default function AnalyticsPage() {
   const params = useParams();
@@ -69,7 +49,7 @@ export default function AnalyticsPage() {
             },
           }
         );
-
+     
         if (!res.ok) {
           const errorText = await res.text();
           throw new Error(`Failed to fetch analytics: ${res.status} - ${errorText}`);
@@ -92,7 +72,7 @@ export default function AnalyticsPage() {
 })),
 
         };
-
+  console.log("THe analytics data:",analyticsData)
         setAnalytics(linkId, analyticsData);
       } catch (err: any) {
         console.error("Analytics fetch error:", err);
@@ -107,12 +87,14 @@ export default function AnalyticsPage() {
 
   const linkAnalytics = analytics[linkId];
 
+
+
 const timeSeriesData = (linkAnalytics?.timestamp || []).map((t) => ({
   date: t.date,
   clicks: t.clicks,
   uniqueClicks: t.uniqueClicks,
 }));
-console.log(timeSeriesData)
+
 
 
 

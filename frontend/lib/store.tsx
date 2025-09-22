@@ -21,10 +21,10 @@ type Link = {
 type Analytics = {
   clicks: number;
   uniqueClicks:number;
-  country: { country: string; count: number }[];
-  referrer: { referrer: string; count: number }[];
-  device: { device: string; count: number }[];
-  browser: { browser: string; count: number }[];
+  country: { country: string; clicks: number }[];
+  referrer: { referrer: string; clicks: number }[];
+  device: { device: string; clicks: number }[];
+  browser: { browser: string; clicks: number }[];
    timestamp: { date: string; clicks: number ; uniqueClicks: number}[]; 
 };
 
@@ -130,7 +130,7 @@ const useAppStore = create<Store>()(
         clicks: b.clicks ?? 0,
       })),
 
-      timestamp: (data.timeseries ?? []).map((t: any) => ({
+      timestamp: (data.timestamp ?? []).map((t: any) => ({
         date: t.date || t._id || "",
         clicks: t.clicks ?? 0,
         uniqueClicks: t.uniqueClicks ?? 0,

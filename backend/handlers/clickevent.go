@@ -134,7 +134,8 @@ func GetAnalytics(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to aggregate referrer"})
 	}
-	fmt.Println(normalizedTimeSeries)
+	fmt.Println(byReferrer)
+
 	return c.JSON(fiber.Map{
 		"clicks":       total,
 		"uniqueClicks": uniqueIPs,

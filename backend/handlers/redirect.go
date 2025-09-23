@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 
 	"linkshortener/db"
 	"linkshortener/models"
@@ -36,7 +37,8 @@ func Redirect(c *fiber.Ctx) error {
 		)
 	}()
 
-	ip := c.IP()
+	ip := utils.GetClientIP(c)
+	fmt.Println(c)
 	referrer := c.Get("Referer")
 	ua := c.Get("User-Agent")
 

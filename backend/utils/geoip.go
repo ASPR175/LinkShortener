@@ -3,7 +3,9 @@ package utils
 import (
 	"log"
 	"net/netip"
+	"strings"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/oschwald/geoip2-golang/v2"
 )
 
@@ -25,9 +27,18 @@ func LookupCountry(ip string) string {
 	if err != nil {
 		return "Unknown"
 	}
+
 	record, err := geoDB.Country(addr)
 	if err != nil || record == nil || record.Country.ISOCode == "" {
 		return "Unknown"
 	}
+
 	return record.Country.ISOCode
+}
+func GetClientIP(c *fiber.Ctx) string {
+	ip := c.Get("X-Forwarded-For")
+	if ip != "" {
+		return strings.TrimSpace(strings.Split(ip, ",")[0])
+	}
+	return c.IP()
 }

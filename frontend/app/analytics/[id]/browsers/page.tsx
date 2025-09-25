@@ -56,7 +56,7 @@ const BrowserPage = () => {
           browser: b._id || "Unknown",
           clicks: Number(b.count?.$numberInt ?? 0),
         }))
-        console.log(data.browser)
+       
         setBrowsers(normalized)
       } catch (err: any) {
         console.log("The Error occurred:", err)

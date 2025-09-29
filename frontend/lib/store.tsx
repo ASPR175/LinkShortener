@@ -27,7 +27,19 @@ type Analytics = {
   browser: { browser: string; clicks: number }[];
    timestamp: { date: string; clicks: number ; uniqueClicks: number}[]; 
 };
-
+type Workspace = {
+  _id: string;
+  name: string;
+  role: "admin" | "member";
+  links: Link[];
+  members: {
+    _id: string;
+    name: string;
+    email: string;
+    avatarURL: string;
+    role: "admin" | "member";
+  }[];
+};
 type Store = {
   user: User | null;
   links: Link[];
@@ -43,6 +55,15 @@ type Store = {
 
   setAnalytics: (linkId: string, data: Analytics) => void;
   clearAnalytics: () => void;
+
+      currentWorkspaceId: string | null;
+  workspaces: Workspace[];
+
+  setCurrentWorkspace: (id: string | null) => void;
+  setWorkspaces: (workspaces: Workspace[]) => void;
+  addWorkspace: (workspace: Workspace) => void;
+  updateWorkspace: (id: string, newData: Partial<Workspace>) => void;
+  removeWorkspace: (id: string) => void;
 };
 
 
@@ -69,7 +90,32 @@ const useAppStore = create<Store>()(
       setUser: (user) => set({ user }),
       clearUser: () => set({ user: null, links: [], analytics: {} }),
 
-  
+        currentWorkspaceId: null,
+workspaces: [],
+
+setCurrentWorkspace: (id) => set({ currentWorkspaceId: id }),
+
+setWorkspaces: (ws) => set({ workspaces: ws }),
+
+addWorkspace: (workspace) =>
+  set((state) => ({
+    workspaces: state.workspaces.some((w) => w._id === workspace._id)
+      ? state.workspaces.map((w) => (w._id === workspace._id ? workspace : w))
+      : [...state.workspaces, workspace],
+  })),
+
+updateWorkspace: (id, newData) =>
+  set((state) => ({
+    workspaces: state.workspaces.map((w) =>
+      w._id === id ? { ...w, ...newData } : w
+    ),
+  })),
+
+removeWorkspace: (id) =>
+  set((state) => ({
+    workspaces: state.workspaces.filter((w) => w._id !== id),
+  })),
+
       setLinks: (links) =>
         set({
           links: Array.isArray(links) ? links.map((l) => normalizeLink(l)) : [],
@@ -144,6 +190,7 @@ const useAppStore = create<Store>()(
 
 
       clearAnalytics: () => set({ analytics: {} }),
+     
     }),
     {
       name: "user-storage",

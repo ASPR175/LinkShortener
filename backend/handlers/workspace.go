@@ -16,14 +16,22 @@ import (
 )
 
 func CreateSpace(c *fiber.Ctx) error {
-	//Might get error
-	userID := c.Locals("user").(primitive.ObjectID)
+	//Might get error,Update this part got and error
+	claims := c.Locals("user").(jwt.MapClaims)
+	userIDHex := claims["user_id"].(string)
+
+	userID, err := primitive.ObjectIDFromHex(userIDHex)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid user id"})
+	}
+
 	var body struct {
 		Name string `json:"name"`
 	}
 	if err := c.BodyParser(&body); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Can not create space"})
 	}
+
 	workspace := models.Workspace{
 		ID:        primitive.NewObjectID(),
 		Name:      body.Name,
@@ -31,7 +39,9 @@ func CreateSpace(c *fiber.Ctx) error {
 		CreatedAt: time.Now(),
 	}
 	coll := db.GetCollection("workspaces")
-	_, err := coll.InsertOne(context.TODO(), workspace)
+
+	_, err = coll.InsertOne(context.TODO(), workspace)
+
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to create workspace"})
 	}

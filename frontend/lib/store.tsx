@@ -30,7 +30,7 @@ type Analytics = {
 type Workspace = {
   _id: string;
   name: string;
-  role: "admin" | "member";
+  role: "admin" | "member" | "owner";
   links: Link[];
   members: {
     _id: string;

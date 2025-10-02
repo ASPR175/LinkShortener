@@ -5,6 +5,7 @@ import (
 	"linkshortener/models"
 	"linkshortener/utils"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -32,13 +33,23 @@ func CreateLink(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to generate id"})
 	}
 
-	claims, ok := c.Locals("user").(jwt.MapClaims)
+	claimsInterface := c.Locals("user")
+	if claimsInterface == nil {
+		return c.Status(401).JSON(fiber.Map{"error": "missing JWT claims"})
+	}
+	claims, ok := claimsInterface.(jwt.MapClaims)
 	if !ok {
-		return c.Status(401).JSON(fiber.Map{"error": "invalid auth context"})
+		return c.Status(401).JSON(fiber.Map{"error": "invalid JWT claims type"})
+	}
+	userIDStr, ok := claims["user_id"].(string)
+	if !ok {
+		return c.Status(401).JSON(fiber.Map{"error": "user_id not found in JWT"})
 	}
 
-	userIDStr := claims["user_id"].(string)
-	userID, _ := primitive.ObjectIDFromHex(userIDStr)
+	userID, err := primitive.ObjectIDFromHex(userIDStr)
+	if err != nil {
+		return c.Status(401).JSON(fiber.Map{"error": "user_id invalid format"})
+	}
 
 	var workspaceObjID *primitive.ObjectID
 	if body.WorkspaceID != nil {
@@ -246,3 +257,90 @@ func DeleteLink(c *fiber.Ctx) error {
 
 	return c.JSON(fiber.Map{"success": true})
 }
+
+// /////////////////////////
+
+func CreateWorkspaceLink(c *fiber.Ctx) error {
+	// 1️⃣ Parse workspace ID from URL
+	workspaceIDHex := c.Params("id")
+	workspaceID, err := primitive.ObjectIDFromHex(workspaceIDHex)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid workspace ID"})
+	}
+
+	// 2️⃣ Parse request body
+	type Req struct {
+		Original string `json:"original"`
+	}
+	var body Req
+	if err := c.BodyParser(&body); err != nil || strings.TrimSpace(body.Original) == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "original URL required"})
+	}
+
+	// 3️⃣ Get JWT claims safely
+	claimsInterface := c.Locals("user")
+	if claimsInterface == nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "missing JWT claims"})
+	}
+	claims, ok := claimsInterface.(jwt.MapClaims)
+	if !ok {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "invalid JWT claims type"})
+	}
+
+	// 4️⃣ Extract user ID safely
+	var userIDStr string
+	if val, exists := claims["user_id"].(string); exists && val != "" {
+		userIDStr = val
+	} else if val, exists := claims["id"].(string); exists && val != "" {
+		userIDStr = val
+	} else {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "user ID not found in JWT"})
+	}
+
+	userID, err := primitive.ObjectIDFromHex(userIDStr)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "invalid user ID format"})
+	}
+
+	// 5️⃣ Check workspace membership
+	isMember, err := utils.IsWorkspaceMember(c.Context(), workspaceID, userID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to verify workspace membership"})
+	}
+	if !isMember {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "not a workspace member"})
+	}
+
+	// 6️⃣ Create link safely
+	shortID, err := utils.GenerateShortID(8)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to generate short ID"})
+	}
+
+	link := models.Link{
+		ID:          primitive.NewObjectID(),
+		UserID:      userID,
+		WorkspaceID: &workspaceID,
+		Original:    body.Original,
+		ShortID:     shortID,
+		Clicks:      0,
+		CreatedAt:   time.Now(),
+	}
+
+	coll := db.GetCollection("links")
+	_, err = coll.InsertOne(c.Context(), link)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to save link"})
+	}
+
+	// 7️⃣ Return clean JSON response
+	return c.JSON(fiber.Map{
+		"_id":        link.ID.Hex(),
+		"short_id":   os.Getenv("APP_BASE_URL") + "/" + shortID,
+		"original":   link.Original,
+		"clicks":     link.Clicks,
+		"created_at": link.CreatedAt,
+	})
+}
+
+////////////////////////////////////////////////////

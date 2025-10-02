@@ -98,24 +98,40 @@ func SpaceDetail(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid workspace ID"})
 	}
+
 	WorkspaceColl := db.GetCollection("workspaces")
 	var workspace models.Workspace
 	if err := WorkspaceColl.FindOne(context.TODO(), bson.M{"_id": workspaceID}).Decode(&workspace); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Couldn't find the valid workspace"})
 	}
+
+	// Fetch members
 	memberColl := db.GetCollection("workspace_members")
-	cursor, err := memberColl.Find(context.TODO(), bson.M{"workspace_id": workspaceID})
+	memberCursor, err := memberColl.Find(context.TODO(), bson.M{"workspace_id": workspaceID})
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to fetch the members"})
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to fetch members"})
 	}
-	defer cursor.Close(context.TODO())
+	defer memberCursor.Close(context.TODO())
 	var members []models.WorkspaceMember
-	if err := cursor.All(context.TODO(), &members); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to parse the number"})
+	if err := memberCursor.All(context.TODO(), &members); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to parse members"})
 	}
+
+	linkColl := db.GetCollection("links")
+	linkCursor, err := linkColl.Find(context.TODO(), bson.M{"workspace_id": workspaceID})
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to fetch links"})
+	}
+	defer linkCursor.Close(context.TODO())
+	var links []models.Link
+	if err := linkCursor.All(context.TODO(), &links); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to parse links"})
+	}
+
 	return c.JSON(fiber.Map{
 		"workspace": workspace,
 		"members":   members,
+		"links":     links,
 	})
 }
 

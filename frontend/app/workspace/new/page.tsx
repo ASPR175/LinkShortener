@@ -30,7 +30,18 @@ async function handleSubmit(e: React.FormEvent) {
 
     const workspaceId = data.workspace?.ID || data.workspace?._id;
     if (!workspaceId) throw new Error("Workspace ID not returned");
-    
+
+    useAppStore.getState().addWorkspace({
+  _id: workspaceId,
+  name: data.workspace.Name || data.workspace.name,
+  links: [],
+   role: "owner",     
+  members: [data.member],
+});
+
+
+
+useAppStore.getState().setCurrentWorkspace(workspaceId);
     router.push(`/workspace/${workspaceId}`);
   } catch (err) {
     console.error(err);

@@ -14,7 +14,7 @@ import (
 func RoleRequired(roles ...string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		claims := c.Locals("user").(jwt.MapClaims)
-		userID, err := primitive.ObjectIDFromHex(claims["id"].(string))
+		userID, err := primitive.ObjectIDFromHex(claims["user_id"].(string))
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid user id"})
 		}

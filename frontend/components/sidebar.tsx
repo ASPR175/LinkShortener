@@ -1,14 +1,22 @@
-"use client";
-
 import Link from "next/link";
-import { useState } from "react";
-import useAppStore from "@/lib/store";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import useAppStore from "@/lib/store";
 
 export default function Sidebar() {
-  const { workspaces, currentWorkspaceId, setCurrentWorkspace } = useAppStore();
-  const [open, setOpen] = useState(false);
   const router = useRouter();
+  const [open, setOpen] = useState(false);
+
+  const workspaces = useAppStore((s) => s.workspaces);
+  const currentWorkspaceId = useAppStore((s) => s.currentWorkspaceId);
+  const setCurrentWorkspace = useAppStore((s) => s.setCurrentWorkspace);
+  const fetchWorkspaces = useAppStore((s) => s.fetchWorkspaces);
+  const user = useAppStore((s) => s.user); 
+
+  useEffect(() => {
+    if (!user?.token) return; 
+    fetchWorkspaces(user.token);
+  }, [fetchWorkspaces, user?.token]);
 
   const currentWorkspace = workspaces.find((w) => w._id === currentWorkspaceId);
 
@@ -26,9 +34,7 @@ export default function Sidebar() {
         {open && (
           <div className="absolute mt-2 w-full bg-white border rounded shadow-md z-50">
             {workspaces.length === 0 ? (
-              <div className="px-3 py-2 text-sm text-gray-500">
-                No workspaces yet
-              </div>
+              <div className="px-3 py-2 text-sm text-gray-500">No workspaces yet</div>
             ) : (
               workspaces.map((ws) => (
                 <button
@@ -49,7 +55,6 @@ export default function Sidebar() {
 
             <div className="border-t my-1" />
 
-            
             <button
               onClick={() => {
                 setOpen(false);
@@ -63,7 +68,6 @@ export default function Sidebar() {
         )}
       </div>
 
-      
       <Link href="/dashboard" className="px-2 py-1 hover:underline">
         Dashboard
       </Link>
@@ -73,5 +77,6 @@ export default function Sidebar() {
     </div>
   );
 }
+
 
 

@@ -7,15 +7,15 @@ import Navbar from "@/components/navbar";
 import useAppStore from "@/lib/store";
 import Link from "next/link";
 import { normalizeLink } from "@/lib/linkSlice";
+
 export default function WorkspacePage() {
-  const { id } = useParams();
+  const params = useParams();
   const router = useRouter();
 
-  const fetchWorkspaceDetail = useAppStore((s) => s.fetchWorkspaceDetail);
-  const workspaces = useAppStore((s) => s.workspaces);
-  const currentWorkspaceId = useAppStore((s) => s.currentWorkspaceId);
-  const setCurrentWorkspace = useAppStore((s) => s.setCurrentWorkspace);
   const token = useAppStore((s) => s.user?.token);
+  const workspaces = useAppStore((s) => s.workspaces);
+  const setCurrentWorkspace = useAppStore((s) => s.setCurrentWorkspace);
+  const fetchWorkspaceDetail = useAppStore((s) => s.fetchWorkspaceDetail);
 
   const [loading, setLoading] = useState(true);
   const [newLink, setNewLink] = useState("");
@@ -24,135 +24,125 @@ export default function WorkspacePage() {
   const [linkLoading, setLinkLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const workspace = workspaces.find((w) => w._id === currentWorkspaceId);
+  // Normalize id
+  const workspaceId: string | null =
+    Array.isArray(params.id) ? params.id[0] : params.id ?? null;
 
+  const workspace = workspaceId
+    ? workspaces.find((w) => w._id === workspaceId) ?? null
+    : null;
+
+  // Fetch workspace detail on mount or when id changes
   useEffect(() => {
-    if (!id || !token) return;
+    if (!workspaceId || !token) return;
 
     setLoading(true);
-    fetchWorkspaceDetail(id as string, token)
-      .then(() => setCurrentWorkspace(id as string))
-      .catch((err) => console.error(err))
+    fetchWorkspaceDetail(workspaceId, token)
+      .then(() => setCurrentWorkspace(workspaceId))
+      .catch(console.error)
       .finally(() => setLoading(false));
-  }, [id, token, fetchWorkspaceDetail, setCurrentWorkspace]);
+  }, [workspaceId, token, fetchWorkspaceDetail, setCurrentWorkspace]);
 
+  // --- Link handlers ---
+  const handleCreate = async () => {
+    if (!newLink.trim() || !token || !workspace) return;
 
+    try {
+      setLinkLoading(true);
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/workspace/${workspace._id}/links`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ original: newLink }),
+        }
+      );
 
-const handleCreate = async () => {
-  if (!newLink.trim() || !token || !workspace) return;
+      if (!res.ok) throw new Error("Failed to create link");
 
-  try {
-    setLinkLoading(true);
+      const data = await res.json();
+      const newLinkObj = normalizeLink(data);
 
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/workspace/${workspace._id}/links`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ original: newLink }),
-      }
-    );
+      useAppStore.setState((state) => ({
+        workspaces: state.workspaces.map((w) =>
+          w._id === workspace._id
+            ? { ...w, links: [...w.links, newLinkObj] }
+            : w
+        ),
+      }));
 
-    if (!res.ok) throw new Error("Failed to create link");
+      setNewLink("");
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Failed to create link");
+    } finally {
+      setLinkLoading(false);
+    }
+  };
 
-    const data = await res.json();
-    const newLinkObj = normalizeLink(data);
+  const handleDelete = async (_id: string) => {
+    if (!token || !workspace) return;
 
-    
-    useAppStore.setState((state) => ({
-      workspaces: state.workspaces.map((w) =>
-        w._id === workspace._id
-          ? { ...w, links: [...w.links, newLinkObj] }
-          : w
-      ),
-      links: [...state.links, newLinkObj],
-    }));
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/workspace/${workspace._id}/links/${_id}`,
+        { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (!res.ok) throw new Error("Delete failed");
 
-    setNewLink("");
-  } catch (err: any) {
-    console.error(err);
-    setError(err.message || "Failed to create link");
-  } finally {
-    setLinkLoading(false);
-  }
-};
+      useAppStore.setState((state) => ({
+        workspaces: state.workspaces.map((w) =>
+          w._id === workspace._id
+            ? { ...w, links: w.links.filter((l) => l._id !== _id) }
+            : w
+        ),
+      }));
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Failed to delete link");
+    }
+  };
 
+  const handleUpdate = async (_id: string) => {
+    if (!editValue.trim() || !token || !workspace) return;
 
-const handleDelete = async (_id: string) => {
-  if (!token || !workspace) return;
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/workspace/${workspace._id}/links/${_id}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ original: editValue }),
+        }
+      );
+      if (!res.ok) throw new Error("Update failed");
 
-  try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/workspace/${workspace._id}/links/${_id}`,
-      {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
+      useAppStore.setState((state) => ({
+        workspaces: state.workspaces.map((w) =>
+          w._id === workspace._id
+            ? {
+                ...w,
+                links: w.links.map((l) =>
+                  l._id === _id ? { ...l, original: editValue } : l
+                ),
+              }
+            : w
+        ),
+      }));
 
-    if (!res.ok) throw new Error("Delete failed");
-
-    
-    useAppStore.setState((state) => ({
-      workspaces: state.workspaces.map((w) =>
-        w._id === workspace._id
-          ? { ...w, links: w.links.filter((l) => l._id !== _id) }
-          : w
-      ),
-      links: state.links.filter((l) => l._id !== _id),
-    }));
-  } catch (err: any) {
-    console.error(err);
-    setError(err.message || "Failed to delete link");
-  }
-};
-
-const handleUpdate = async (_id: string) => {
-  if (!editValue.trim() || !token || !workspace) return;
-
-  try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/workspace/${workspace._id}/links/${_id}`,
-      {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ original: editValue }),
-      }
-    );
-
-    if (!res.ok) throw new Error("Update failed");
-
-    
-    useAppStore.setState((state) => ({
-      workspaces: state.workspaces.map((w) =>
-        w._id === workspace._id
-          ? {
-              ...w,
-              links: w.links.map((l) =>
-                l._id === _id ? { ...l, original: editValue } : l
-              ),
-            }
-          : w
-      ),
-      links: state.links.map((l) =>
-        l._id === _id ? { ...l, original: editValue } : l
-      ),
-    }));
-
-    setEditingId(null);
-    setEditValue("");
-  } catch (err: any) {
-    console.error(err);
-    setError(err.message || "Failed to update link");
-  }
-};
-
+      setEditingId(null);
+      setEditValue("");
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Failed to update link");
+    }
+  };
 
   if (loading) return <div className="p-6">Loading workspace...</div>;
   if (!workspace) return <div className="p-6">Workspace not found</div>;
@@ -191,11 +181,13 @@ const handleUpdate = async (_id: string) => {
             </button>
           </div>
 
-        
-          {workspace.links.length === 0 && <p className="text-gray-500">No links yet</p>}
+          {workspace.links.length === 0 && (
+            <p className="text-gray-500">No links yet</p>
+          )}
+
           <div className="grid gap-4">
-            {workspace.links.map((link) => (
-              <div key={link._id} className="border rounded p-4 shadow">
+            {workspace.links.map((link, idx) => (
+              <div key={link._id || `link-${idx}`} className="border rounded p-4 shadow">
                 {editingId === link._id ? (
                   <div className="flex gap-2">
                     <input
@@ -232,10 +224,22 @@ const handleUpdate = async (_id: string) => {
                         {`${process.env.NEXT_PUBLIC_BACKEND_URL}/${link.short_id}`}
                       </a>
                     </p>
-                    <p className="truncate"><strong>Original:</strong> {link.original}</p>
-                    <p><strong>Clicks:</strong> {link.clicks}</p>
-                    <p><strong>Created:</strong> {new Date(link.created_at).toLocaleString()}</p>
-                    <p><strong>Updated:</strong> {link.updated_at ? new Date(link.updated_at).toLocaleString() : "-"}</p>
+                    <p className="truncate">
+                      <strong>Original:</strong> {link.original}
+                    </p>
+                    <p>
+                      <strong>Clicks:</strong> {link.clicks}
+                    </p>
+                    <p>
+                      <strong>Created:</strong>{" "}
+                      {new Date(link.created_at).toLocaleString()}
+                    </p>
+                    <p>
+                      <strong>Updated:</strong>{" "}
+                      {link.updated_at
+                        ? new Date(link.updated_at).toLocaleString()
+                        : "-"}
+                    </p>
                     <div className="flex gap-2 mt-2">
                       <button
                         onClick={() => {
@@ -269,6 +273,7 @@ const handleUpdate = async (_id: string) => {
     </div>
   );
 }
+
 
 
 

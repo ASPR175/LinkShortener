@@ -16,7 +16,7 @@ import (
 )
 
 func CreateSpace(c *fiber.Ctx) error {
-	//Might get error,Update this part got and error
+
 	claims := c.Locals("user").(jwt.MapClaims)
 	userIDHex := claims["user_id"].(string)
 
@@ -57,30 +57,62 @@ func CreateSpace(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to create workspace member"})
 	}
+	// return c.JSON(fiber.Map{
+	// 	"workspace": workspace,
+	// 	"member":    member,
+	// })
 	return c.JSON(fiber.Map{
-		"workspace": workspace,
-		"member":    member,
+		"workspace": fiber.Map{
+			"_id":        workspace.ID.Hex(),
+			"name":       workspace.Name,
+			"created_by": workspace.CreatedBy.Hex(),
+			"created_at": workspace.CreatedAt,
+		},
+		"member": fiber.Map{
+			"_id":          member.ID.Hex(),
+			"workspace_id": member.WorkspaceID.Hex(),
+			"user_id":      member.UserID.Hex(),
+			"role":         member.Role,
+			"joined_at":    member.JoinedAt,
+		},
 	})
 }
 func GetSpaces(c *fiber.Ctx) error {
-	//Might get error
-	userID := c.Locals("user").(primitive.ObjectID)
+
+	claims, ok := c.Locals("user").(jwt.MapClaims)
+	if !ok {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid user claims"})
+	}
+
+	userIDStr, ok := claims["user_id"].(string)
+	if !ok {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid user ID in claims"})
+	}
+
+	userID, err := primitive.ObjectIDFromHex(userIDStr)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid user ID format"})
+	}
+
 	membercoll := db.GetCollection("workspace_members")
 	cursor, err := membercoll.Find(context.TODO(), bson.M{"user_id": userID})
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Invalid response"})
 	}
 	defer cursor.Close(context.TODO())
+
 	var memberships []models.WorkspaceMember
 	if err := cursor.All(context.TODO(), &memberships); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to fetch the membershipa"})
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to fetch memberships"})
 	}
-	id := make([]primitive.ObjectID, len(memberships))
+
+	ids := make([]primitive.ObjectID, len(memberships))
 	for i, m := range memberships {
-		id[i] = m.WorkspaceID
+		ids[i] = m.WorkspaceID
 	}
+
 	workspaceColl := db.GetCollection("workspaces")
-	cursor, err = workspaceColl.Find(context.TODO(), bson.M{"_id": bson.M{"$in": id}})
+	cursor, err = workspaceColl.Find(context.TODO(), bson.M{"_id": bson.M{"$in": ids}})
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to fetch workspaces"})
 	}
@@ -88,11 +120,24 @@ func GetSpaces(c *fiber.Ctx) error {
 
 	var workspaces []models.Workspace
 	if err := cursor.All(context.TODO(), &workspaces); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to parse workspaces"})
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to parse workspaces"})
 	}
 
-	return c.JSON(workspaces)
+	var workspaceList []fiber.Map
+	for _, w := range workspaces {
+		workspaceList = append(workspaceList, fiber.Map{
+			"_id":        w.ID.Hex(),
+			"name":       w.Name,
+			"created_by": w.CreatedBy.Hex(),
+			"created_at": w.CreatedAt,
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"workspaces": workspaceList,
+	})
 }
+
 func SpaceDetail(c *fiber.Ctx) error {
 	workspaceID, err := primitive.ObjectIDFromHex(c.Params("id"))
 	if err != nil {
@@ -105,7 +150,6 @@ func SpaceDetail(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Couldn't find the valid workspace"})
 	}
 
-	// Fetch members
 	memberColl := db.GetCollection("workspace_members")
 	memberCursor, err := memberColl.Find(context.TODO(), bson.M{"workspace_id": workspaceID})
 	if err != nil {
@@ -128,11 +172,41 @@ func SpaceDetail(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to parse links"})
 	}
 
+	var membersList []fiber.Map
+	for _, m := range members {
+		membersList = append(membersList, fiber.Map{
+			"_id":          m.ID.Hex(),
+			"workspace_id": m.WorkspaceID.Hex(),
+			"user_id":      m.UserID.Hex(),
+			"role":         m.Role,
+			"joined_at":    m.JoinedAt,
+		})
+	}
+
+	var linksList []fiber.Map
+	for _, l := range links {
+		linksList = append(linksList, fiber.Map{
+			"_id":          l.ID.Hex(),
+			"short_id":     l.ShortID,
+			"original":     l.Original,
+			"clicks":       l.Clicks,
+			"workspace_id": l.WorkspaceID.Hex(),
+			"created_at":   l.CreatedAt,
+			"updated_at":   l.UpdatedAt,
+		})
+	}
+
 	return c.JSON(fiber.Map{
-		"workspace": workspace,
-		"members":   members,
-		"links":     links,
+		"workspace": fiber.Map{
+			"_id":        workspace.ID.Hex(),
+			"name":       workspace.Name,
+			"created_by": workspace.CreatedBy.Hex(),
+			"created_at": workspace.CreatedAt,
+		},
+		"members": membersList,
+		"links":   linksList,
 	})
+
 }
 
 // ///////////////////

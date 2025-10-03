@@ -40,37 +40,44 @@ export const createWorkspaceSlice: StateCreator<WorkspaceSlice> = (set) => ({
       workspaces: state.workspaces.filter((w) => w._id !== id),
     })),
 
-  fetchWorkspaces: async (token) => {
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/workspace`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      set({ workspaces: data.workspaces || [] });
-    } catch (err) {
-      console.error("fetchWorkspaces error", err);
+fetchWorkspaces: async (token: string) => {
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/workspace`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!res.ok) {
+      console.error(`fetchWorkspaces: HTTP ${res.status} - ${res.statusText}`);
+      return;
     }
-  },
 
-  // fetchWorkspaceDetail: async (id, token) => {
-  //   try {
-  //     const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/workspace/${id}`, {
-  //       headers: { Authorization: `Bearer ${token}` },
-  //     });
-  //     const data = await res.json();
+    const text = await res.text();
 
-  //     set((state) => ({
-  //       workspaces: state.workspaces.map((w) =>
-  //         w._id === id
-  //           ? { ...w, ...data.workspace, links: (data.links || []).map(normalizeLink) }
-  //           : w
-  //       ),
-  //       currentWorkspaceId: id,
-  //     }));
-  //   } catch (err) {
-  //     console.error("fetchWorkspaceDetail error", err);
-  //   }
-  // },
+    let data: { workspaces: any[] };
+    try {
+      data = JSON.parse(text);
+      console.log(data)
+    } catch {
+      console.error("fetchWorkspaces: response was not JSON");
+      return;
+    }
+
+    
+    const normalized = (data.workspaces || []).map(ws => ({
+      _id: ws._id?.toString() || crypto.randomUUID(),   
+      name: ws.name ?? "Unnamed",
+      role: ws.role ?? "member",
+      links: ws.links ?? [],
+      members: ws.members ?? [],
+    }));
+
+    set({ workspaces: normalized });
+  } catch (err) {
+    console.error("fetchWorkspaces error", err);
+  }
+}
+
+,
   fetchWorkspaceDetail: async (id, token) => {
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/workspace/${id}`, {
@@ -88,7 +95,7 @@ export const createWorkspaceSlice: StateCreator<WorkspaceSlice> = (set) => ({
         ? state.workspaces.map((w) => (w._id === id ? workspace : w))
         : [...state.workspaces, workspace],
       currentWorkspaceId: id,
-      links: workspace.links,
+  
     }));
 
     return workspace;

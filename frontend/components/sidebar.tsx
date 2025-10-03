@@ -1,82 +1,54 @@
+"use client";
+
 import Link from "next/link";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import useAppStore from "@/lib/store";
 
 export default function Sidebar() {
-  const router = useRouter();
-  const [open, setOpen] = useState(false);
-
   const workspaces = useAppStore((s) => s.workspaces);
   const currentWorkspaceId = useAppStore((s) => s.currentWorkspaceId);
-  const setCurrentWorkspace = useAppStore((s) => s.setCurrentWorkspace);
-  const fetchWorkspaces = useAppStore((s) => s.fetchWorkspaces);
-  const user = useAppStore((s) => s.user); 
-
-  useEffect(() => {
-    if (!user?.token) return; 
-    fetchWorkspaces(user.token);
-  }, [fetchWorkspaces, user?.token]);
-
-  const currentWorkspace = workspaces.find((w) => w._id === currentWorkspaceId);
+  const pathname = usePathname();
 
   return (
-    <div className="w-56 border-r h-screen p-4 flex flex-col space-y-6">
-      
-      <div className="relative">
-        <button
-          onClick={() => setOpen(!open)}
-          className="w-full text-left px-3 py-2 border rounded bg-gray-50 hover:bg-gray-100"
-        >
-          {currentWorkspace ? currentWorkspace.name : "Select Workspace"}
-        </button>
+    <aside className="w-64 bg-gray-100 border-r p-4 flex flex-col">
+      <h2 className="text-lg font-bold mb-4">Your Workspaces</h2>
 
-        {open && (
-          <div className="absolute mt-2 w-full bg-white border rounded shadow-md z-50">
-            {workspaces.length === 0 ? (
-              <div className="px-3 py-2 text-sm text-gray-500">No workspaces yet</div>
-            ) : (
-              workspaces.map((ws) => (
-                <button
-                  key={ws._id}
-                  onClick={() => {
-                    setCurrentWorkspace(ws._id);
-                    setOpen(false);
-                    router.push(`/workspace/${ws._id}`);
-                  }}
-                  className={`block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 ${
-                    ws._id === currentWorkspaceId ? "bg-gray-200" : ""
-                  }`}
-                >
-                  {ws.name}
-                </button>
-              ))
-            )}
-
-            <div className="border-t my-1" />
-
-            <button
-              onClick={() => {
-                setOpen(false);
-                router.push("/workspace/new");
-              }}
-              className="block w-full text-left px-3 py-2 text-sm text-blue-600 hover:bg-blue-50"
-            >
-              + New Workspace
-            </button>
-          </div>
+      <div className="flex flex-col gap-2 flex-1 overflow-y-auto">
+        {workspaces.length === 0 && (
+          <p className="text-gray-500">No workspaces yet</p>
         )}
+
+        {workspaces.map((ws) => {
+          
+          const wsId = ws._id?.toString?.() || ws._id || "";
+          const isActive =
+            wsId === currentWorkspaceId ||
+            pathname.startsWith(`/workspace/${wsId}`);
+
+          return (
+            <Link
+              key={wsId}
+              href={`/workspace/${wsId}`}
+              className={`block px-3 py-2 rounded ${
+                isActive ? "bg-blue-500 text-white" : "hover:bg-gray-200"
+              }`}
+            >
+              {ws.name ?? "Unnamed"}
+            </Link>
+          );
+        })}
       </div>
 
-      <Link href="/dashboard" className="px-2 py-1 hover:underline">
-        Dashboard
+      <Link
+        href="/workspace/new"
+        className="mt-4 block text-center bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+      >
+        + New Workspace
       </Link>
-      <Link href="/links" className="px-2 py-1 hover:underline">
-        Links
-      </Link>
-    </div>
+    </aside>
   );
 }
+
 
 
 

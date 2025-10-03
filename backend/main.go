@@ -39,12 +39,12 @@ func main() {
 		c.Locals("session", sess)
 		return c.Next()
 	})
+
 	routes.AuthRoutes(app)
 	routes.LinkRoutes(app)
-	routes.Redirect(app)
-	routes.ClickEventRoutes(app)
-	routes.ApikeyRoutes(app)
 	routes.WorkspaceRoutes(app)
+	routes.ClickEventRoutes(app)
+	routes.Redirect(app)
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"

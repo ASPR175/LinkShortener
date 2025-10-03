@@ -3,54 +3,68 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import useAppStore from "@/lib/store";
+
 export default function NewWorkspacePage() {
   const [name, setName] = useState("");
-
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-const token = useAppStore.getState().user?.token;
-async function handleSubmit(e: React.FormEvent) {
-  e.preventDefault();
-  setLoading(true);
+  const token = useAppStore.getState().user?.token;
 
-  try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/workspace`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ name }),
-    });
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!name.trim() || !token) return;
 
-    if (!res.ok) throw new Error("Failed to create workspace");
+    setLoading(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/workspace`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ name }),
+      });
 
-    const data = await res.json();
-   
+      if (!res.ok) throw new Error("Failed to create workspace");
 
-    const workspaceId = data.workspace?.ID || data.workspace?._id;
-    if (!workspaceId) throw new Error("Workspace ID not returned");
+      const data = await res.json();
 
-    useAppStore.getState().addWorkspace({
-  _id: workspaceId,
-  name: data.workspace.Name || data.workspace.name,
-  links: [],
-   role: "owner",     
-  members: [data.member],
-});
+      const workspace = data.workspace;
+      const member = data.member;
 
+      if (!workspace?._id) throw new Error("Workspace ID not returned");
 
+      const workspaceId = workspace._id.toString();
 
-useAppStore.getState().setCurrentWorkspace(workspaceId);
-    router.push(`/workspace/${workspaceId}`);
-  } catch (err) {
-    console.error(err);
-    alert("Failed to create workspace");
-  } finally {
-    setLoading(false);
+      // Normalize workspace
+      useAppStore.getState().addWorkspace({
+        _id: workspaceId,
+        name: workspace.name ?? "Unnamed",
+        links: [],
+        role: "owner",
+        members: member
+          ? [
+              {
+                _id: member._id.toString(),
+                name: member.name ?? "Unnamed",
+                email: member.email ?? "",
+                avatarURL: member.avatarURL ?? "",
+                role: member.role ?? "owner",
+              },
+            ]
+          : [],
+      });
+
+      useAppStore.getState().setCurrentWorkspace(workspaceId);
+
+      router.push(`/workspace/${workspaceId}`);
+    } catch (err: any) {
+      console.error(err);
+      alert(err.message || "Failed to create workspace");
+    } finally {
+      setLoading(false);
+    }
   }
-}
-
 
   return (
     <div className="p-6 max-w-lg mx-auto">
@@ -66,7 +80,7 @@ useAppStore.getState().setCurrentWorkspace(workspaceId);
             required
           />
         </div>
-        
+
         <button
           type="submit"
           disabled={loading}
@@ -78,3 +92,4 @@ useAppStore.getState().setCurrentWorkspace(workspaceId);
     </div>
   );
 }
+

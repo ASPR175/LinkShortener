@@ -39,6 +39,23 @@ export default function Sidebar() {
         })}
       </div>
 
+
+
+     <div className="mt-6">
+        <h2 className="text-lg font-bold mb-2">Your Links</h2>
+        <Link
+          href="/links"
+          className={`block px-3 py-2 rounded ${
+            pathname.startsWith("/links")
+              ? "bg-blue-500 text-white"
+              : "hover:bg-gray-200"
+          }`}
+        >
+          🔗 Links
+        </Link>
+      </div>
+
+
       <Link
         href="/workspace/new"
         className="mt-4 block text-center bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"

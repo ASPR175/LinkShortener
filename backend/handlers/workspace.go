@@ -57,10 +57,7 @@ func CreateSpace(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to create workspace member"})
 	}
-	// return c.JSON(fiber.Map{
-	// 	"workspace": workspace,
-	// 	"member":    member,
-	// })
+
 	return c.JSON(fiber.Map{
 		"workspace": fiber.Map{
 			"_id":        workspace.ID.Hex(),

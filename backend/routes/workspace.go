@@ -22,6 +22,6 @@ func WorkspaceRoutes(app *fiber.App) {
 	r.Delete("/:id/members/:userId", middleware.RoleRequired("owner", "admin"), handlers.RemoveMember)
 	r.Post("/:id/links", middleware.RoleRequired("member", "admin", "owner"), handlers.CreateWorkspaceLink)
 	r.Get("/:id/links", middleware.RoleRequired("member", "admin", "owner"), handlers.GetLinks)
-	r.Patch("/:id/links/:linkId", middleware.RoleRequired("admin", "owner"), handlers.UpdateLink)
-	r.Delete("/:id/links/:linkId", middleware.RoleRequired("admin", "owner"), handlers.DeleteLink)
+	r.Patch("/:id/links/:linkId", middleware.RoleRequired("admin", "owner"), handlers.UpdateWorkspaceLink)
+	r.Delete("/:id/links/:linkId", middleware.RoleRequired("admin", "owner"), handlers.DeleteWorkspaceLink)
 }

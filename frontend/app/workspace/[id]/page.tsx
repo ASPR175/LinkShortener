@@ -24,7 +24,7 @@ export default function WorkspacePage() {
   const [linkLoading, setLinkLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Normalize id
+ 
   const workspaceId: string | null =
     Array.isArray(params.id) ? params.id[0] : params.id ?? null;
 
@@ -32,7 +32,7 @@ export default function WorkspacePage() {
     ? workspaces.find((w) => w._id === workspaceId) ?? null
     : null;
 
-  // Fetch workspace detail on mount or when id changes
+ 
   useEffect(() => {
     if (!workspaceId || !token) return;
 
@@ -43,7 +43,7 @@ export default function WorkspacePage() {
       .finally(() => setLoading(false));
   }, [workspaceId, token, fetchWorkspaceDetail, setCurrentWorkspace]);
 
-  // --- Link handlers ---
+  
   const handleCreate = async () => {
     if (!newLink.trim() || !token || !workspace) return;
 
@@ -83,66 +83,138 @@ export default function WorkspacePage() {
     }
   };
 
-  const handleDelete = async (_id: string) => {
-    if (!token || !workspace) return;
+  // const handleDelete = async (_id: string) => {
+  //   if (!token || !workspace) return;
 
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/workspace/${workspace._id}/links/${_id}`,
-        { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }
-      );
-      if (!res.ok) throw new Error("Delete failed");
+  //   try {
+  //     const res = await fetch(
+  //       `${process.env.NEXT_PUBLIC_BACKEND_URL}/workspace/${workspace._id}/links/${_id}`,
+  //       { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }
+  //     );
+  //     if (!res.ok) throw new Error("Delete failed");
 
-      useAppStore.setState((state) => ({
-        workspaces: state.workspaces.map((w) =>
-          w._id === workspace._id
-            ? { ...w, links: w.links.filter((l) => l._id !== _id) }
-            : w
-        ),
-      }));
-    } catch (err: any) {
-      console.error(err);
-      setError(err.message || "Failed to delete link");
-    }
-  };
+  //     useAppStore.setState((state) => ({
+  //       workspaces: state.workspaces.map((w) =>
+  //         w._id === workspace._id
+  //           ? { ...w, links: w.links.filter((l) => l._id !== _id) }
+  //           : w
+  //       ),
+  //     }));
+  //   } catch (err: any) {
+  //     console.error(err);
+  //     setError(err.message || "Failed to delete link");
+  //   }
+  // };
 
-  const handleUpdate = async (_id: string) => {
-    if (!editValue.trim() || !token || !workspace) return;
+  // const handleUpdate = async (_id: string) => {
+  //   if (!editValue.trim() || !token || !workspace) return;
 
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/workspace/${workspace._id}/links/${_id}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ original: editValue }),
-        }
-      );
-      if (!res.ok) throw new Error("Update failed");
+  //   try {
+  //     const res = await fetch(
+  //       `${process.env.NEXT_PUBLIC_BACKEND_URL}/workspace/${workspace._id}/links/${_id}`,
+  //       {
+  //         method: "PATCH",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //         body: JSON.stringify({ original: editValue }),
+  //       }
+  //     );
+  //     if (!res.ok) throw new Error("Update failed");
 
-      useAppStore.setState((state) => ({
-        workspaces: state.workspaces.map((w) =>
-          w._id === workspace._id
-            ? {
-                ...w,
-                links: w.links.map((l) =>
-                  l._id === _id ? { ...l, original: editValue } : l
-                ),
-              }
-            : w
-        ),
-      }));
+  //     useAppStore.setState((state) => ({
+  //       workspaces: state.workspaces.map((w) =>
+  //         w._id === workspace._id
+  //           ? {
+  //               ...w,
+  //               links: w.links.map((l) =>
+  //                 l._id === _id ? { ...l, original: editValue } : l
+  //               ),
+  //             }
+  //           : w
+  //       ),
+  //     }));
 
-      setEditingId(null);
-      setEditValue("");
-    } catch (err: any) {
-      console.error(err);
-      setError(err.message || "Failed to update link");
-    }
-  };
+  //     setEditingId(null);
+  //     setEditValue("");
+  //   } catch (err: any) {
+  //     console.error(err);
+  //     setError(err.message || "Failed to update link");
+  //   }
+  // };
+const handleDelete = async (_id: string) => {
+  if (!token || !workspace) return;
+console.log("workspaceID from the hell:",workspace._id)
+console.log("ID from the hell:",_id)
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/workspace/${workspace._id}/links/${_id}`,
+      {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.error || "Delete failed");
+
+   
+    useAppStore.setState((state) => ({
+      workspaces: state.workspaces.map((w) =>
+        w._id === workspace._id
+          ? { ...w, links: w.links.filter((l) => l._id !== _id) }
+          : w
+      ),
+    }));
+  } catch (err: any) {
+    console.error("DeleteLink error:", err);
+    setError(err.message || "Failed to delete link");
+  }
+};
+
+const handleUpdate = async (_id: string) => {
+  if (!editValue.trim() || !token || !workspace) return;
+
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/workspace/${workspace._id}/links/${_id}`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ original: editValue }),
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.error || "Update failed");
+
+   
+    useAppStore.setState((state) => ({
+      workspaces: state.workspaces.map((w) =>
+        w._id === workspace._id
+          ? {
+              ...w,
+              links: w.links.map((l) =>
+                l._id === _id ? { ...l, original: editValue } : l
+              ),
+            }
+          : w
+      ),
+    }));
+
+    setEditingId(null);
+    setEditValue("");
+  } catch (err: any) {
+    console.error("UpdateLink error:", err);
+    setError(err.message || "Failed to update link");
+  }
+};
 
   if (loading) return <div className="p-6">Loading workspace...</div>;
   if (!workspace) return <div className="p-6">Workspace not found</div>;

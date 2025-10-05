@@ -3,45 +3,34 @@
 import { useState } from "react";
 import useAppStore from "@/lib/store";
 
-
-
-
 export default function Navbar() {
   const user = useAppStore((s) => s.user);
-  const setUser = useAppStore((s) => s.setUser);
-  const clearUser = useAppStore((s) => s.clearUser); 
+  const clearUser = useAppStore((s) => s.clearUser);
   const [open, setOpen] = useState(false);
- 
-const handleLogout = async () => {
-  try {
-    await fetch("http://localhost:8080/auth/logout", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${user?.token}`,
-      },
-    });
 
-    clearUser();
+  const handleLogout = async () => {
+    if (!user?.token) return;
 
- 
-    window.open("", "_self");
-    window.close();
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/logout`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
 
-   
-    setTimeout(() => {
+      clearUser();
+
+      // Safe redirect to logout page
       window.location.href = "/logout";
-    }, 300);
-  } catch (err) {
-    console.error("Logout failed:", err);
-  }
-};
-
+    } catch (err) {
+      console.error("Logout failed:", err);
+    }
+  };
 
   return (
     <div className="w-full p-4 border-b flex justify-end items-center relative">
-      {user?.AvatarURL ? (
+      {user?.avatarURL ? (
         <img
-           src={user.AvatarURL}
+          src={user.avatarURL}
           alt="avatar"
           className="w-10 h-10 rounded-full border cursor-pointer"
           onClick={() => setOpen(!open)}

@@ -1,23 +1,31 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+
 import { createUserSlice, UserSlice } from "./userSlice";
 import { createLinkSlice, LinkSlice } from "./linkSlice";
 import { createWorkspaceSlice, WorkspaceSlice } from "./workspaceSlice";
 import { createAnalyticsSlice, AnalyticsSlice } from "./analyticsSlice";
 
-type AppStore = UserSlice & LinkSlice & WorkspaceSlice & AnalyticsSlice;
+export type AppStore = UserSlice & LinkSlice & WorkspaceSlice & AnalyticsSlice;
 
-const useAppStore = create<AppStore>()(
+export const useAppStore = create<AppStore>()(
   persist(
-    (...a) => ({
-      ...createUserSlice(...a),
-      ...createLinkSlice(...a),
-      ...createWorkspaceSlice(...a),
-      ...createAnalyticsSlice(...a),
+    (set, get) => ({
+      ...createUserSlice(set, get),
+      ...createLinkSlice(set, get),
+      ...createWorkspaceSlice(set, get),
+      ...createAnalyticsSlice(set, get),
     }),
-    { name: "user-storage" }
+    {
+      name: "app-storage",
+      partialize: (state) => ({ user: state.user }), 
+    }
   )
 );
 
-export default useAppStore;
+
+
+
+
+
 

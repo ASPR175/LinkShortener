@@ -1,57 +1,37 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Sidebar from "@/components/sidebar";
 import Navbar from "@/components/navbar";
 import useAppStore from "@/lib/store";
-import { useRouter } from "next/navigation";
-
-
-interface Link {
-  _id: string;
-  short_id: string;
-  original: string;
-  clicks: number;
-  created_at: string;
-  updated_at?: string;
-  workspace_id?: string | null;
-}
+import { Link as LinkType } from "@/lib/types";
 
 export default function LinksPage() {
-const router = useRouter();
-
-  const { user, links, setLinks, addLink, removeLink, updateLink } = useAppStore();
-  const [hydrated, setHydrated] = useState(false);
-
+  const router = useRouter();
+  const { user, links, setLinks, removeLink, addOrUpdateLink } = useAppStore();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const [newLink, setNewLink] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-console.log("User in store:", user);
-console.log("Token being sent:", user?.token);
 
-  
+ 
   useEffect(() => {
-    setHydrated(true);
-  }, []);
+    if (!user?.token) return;
 
-  
-  useEffect(() => {
-    if (!hydrated || !user || !user.token) return;
-  
     const fetchLinks = async () => {
       try {
         setLoading(true);
         setError("");
+
         const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/links`, {
           headers: { Authorization: `Bearer ${user.token}` },
         });
         if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
-        const data: Link[] = await res.json();
 
-        
-        setLinks(Array.isArray(data) ? data : []);
+        const data: LinkType[] = await res.json();
+        setLinks(data); 
       } catch (err: any) {
         setError(err.message || "Failed to fetch links");
       } finally {
@@ -60,81 +40,70 @@ console.log("Token being sent:", user?.token);
     };
 
     fetchLinks();
-  }, [hydrated, user, setLinks]);
+  }, [user?.token, setLinks]);
 
-const handleCreate = async () => {
-  if (!newLink.trim() || !user) return;
-  try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/links`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${user.token}`,
-      },
-      body: JSON.stringify({ original: newLink }),
-    });
-    if (!res.ok) throw new Error("Create failed");
-    const data: Link = await res.json();
+  
+  const handleCreate = async () => {
+    if (!newLink.trim() || !user?.token) return;
 
-    
-    const cleanLink = {
-      ...data,
-      short_id: data.short_id.replace(`${process.env.NEXT_PUBLIC_BACKEND_URL}/`, ""),
-    };
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/links`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${user.token}`,
+        },
+        body: JSON.stringify({ original: newLink }),
+      });
+      if (!res.ok) throw new Error("Create failed");
 
-    addLink(cleanLink);
-    setNewLink("");
-  } catch (err: any) {
-    setError(err.message || "Failed to create link");
-  }
-};
+      const data: LinkType = await res.json();
+      addOrUpdateLink(data); 
+      setNewLink("");
+    } catch (err: any) {
+      setError(err.message || "Failed to create link");
+    }
+  };
 
 
   const handleDelete = async (_id: string) => {
-    if (!user) return;
+    if (!user?.token) return;
+
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/links/${_id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${user.token}` },
       });
       if (!res.ok) throw new Error("Delete failed");
+
       removeLink(_id);
     } catch (err: any) {
       setError(err.message || "Failed to delete link");
     }
   };
 
-const handleUpdate = async (_id: string) => {
-  if (!editValue.trim() || !user) return;
-  try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/links/${_id}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${user.token}`,
-      },
-      body: JSON.stringify({ original: editValue }),
-    });
-    if (!res.ok) throw new Error("Update failed");
+ 
+  const handleUpdate = async (_id: string) => {
+    if (!editValue.trim() || !user?.token) return;
 
-    
-    const resAll = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/links`, {
-      headers: { Authorization: `Bearer ${user.token}` },
-    });
-    const updatedLinks: Link[] = await resAll.json();
-    setLinks(updatedLinks);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/links/${_id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${user.token}`,
+        },
+        body: JSON.stringify({ original: editValue }),
+      });
+      if (!res.ok) throw new Error("Update failed");
 
-    setEditingId(null);
-    setEditValue("");
-  } catch (err: any) {
-    setError(err.message || "Failed to update link");
-  }
-};
-
-
-  if (!hydrated) return <div>Loading...</div>; 
-   
-  const safeLinks = Array.isArray(links) ? links : [];
+      addOrUpdateLink({ _id, original: editValue }); 
+      setEditingId(null);
+      setEditValue("");
+    } catch (err: any) {
+      setError(err.message || "Failed to update link");
+    }
+  };
 
   return (
     <div className="flex h-screen">
@@ -143,6 +112,7 @@ const handleUpdate = async (_id: string) => {
         <Navbar />
         <div className="p-4 space-y-4">
           <h1 className="text-xl font-bold">Your Links</h1>
+
           {error && <p className="text-red-500">{error}</p>}
           {loading && <p className="text-gray-500">Loading...</p>}
 
@@ -153,16 +123,13 @@ const handleUpdate = async (_id: string) => {
               placeholder="Enter original URL"
               className="border rounded p-2 flex-1"
             />
-            <button
-              onClick={handleCreate}
-              className="bg-blue-600 text-white px-4 py-2 rounded"
-            >
+            <button onClick={handleCreate} className="bg-blue-600 text-white px-4 py-2 rounded">
               Create
             </button>
           </div>
 
           <div className="grid gap-4">
-            {safeLinks.map((link: Link) => (
+            {links.map((link) => (
               <div key={link._id} className="border rounded p-4 shadow">
                 {editingId === link._id ? (
                   <div className="flex gap-2">
@@ -171,17 +138,11 @@ const handleUpdate = async (_id: string) => {
                       onChange={(e) => setEditValue(e.target.value)}
                       className="border rounded p-2 flex-1"
                     />
-                    <button
-                      onClick={() => handleUpdate(link._id)}
-                      className="bg-green-600 text-white px-3 py-1 rounded"
-                    >
+                    <button onClick={() => handleUpdate(link._id)} className="bg-green-600 text-white px-3 py-1 rounded">
                       Save
                     </button>
                     <button
-                      onClick={() => {
-                        setEditingId(null);
-                        setEditValue("");
-                      }}
+                      onClick={() => { setEditingId(null); setEditValue(""); }}
                       className="bg-gray-400 text-white px-3 py-1 rounded"
                     >
                       Cancel
@@ -189,44 +150,32 @@ const handleUpdate = async (_id: string) => {
                   </div>
                 ) : (
                   <>
-<p>
-  <strong>Short URL:</strong>{" "}
-  <a
-    href={`${process.env.NEXT_PUBLIC_BACKEND_URL}/${link.short_id}`}
-    target="_blank"
-    rel="noopener noreferrer"
-    className="text-blue-600 underline"
-  >
-    {`${process.env.NEXT_PUBLIC_BACKEND_URL}/${link.short_id}`}
-  </a>
-</p>
-
+                    <p>
+                      <strong>Short URL:</strong>{" "}
+                      <a
+                        href={`${process.env.NEXT_PUBLIC_BACKEND_URL}/${link.shortID}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 underline"
+                      >
+                        {`${process.env.NEXT_PUBLIC_BACKEND_URL}/${link.shortID}`}
+                      </a>
+                    </p>
                     <p className="truncate"><strong>Original:</strong> {link.original}</p>
                     <p><strong>Clicks:</strong> {link.clicks}</p>
-                    <p><strong>Created:</strong> {new Date(link.created_at).toLocaleString()}</p>
-                    <p><strong>Updated:</strong> {link.updated_at ? new Date(link.updated_at).toLocaleString() : "-"}</p>
+                    <p><strong>Created:</strong> {new Date(link.createdAt).toLocaleString()}</p>
+                    <p><strong>Updated:</strong> {link.updatedAt ? new Date(link.updatedAt).toLocaleString() : "-"}</p>
+
                     <div className="flex gap-2 mt-2">
-                      <button
-                        onClick={() => {
-                          setEditingId(link._id);
-                          setEditValue(link.original);
-                        }}
-                        className="bg-yellow-500 text-white px-3 py-1 rounded"
-                      >
+                      <button onClick={() => { setEditingId(link._id); setEditValue(link.original); }} className="bg-yellow-500 text-white px-3 py-1 rounded">
                         Edit
                       </button>
-                      <button
-                        onClick={() => handleDelete(link._id)}
-                        className="bg-red-600 text-white px-3 py-1 rounded"
-                      >
+                      <button onClick={() => handleDelete(link._id)} className="bg-red-600 text-white px-3 py-1 rounded">
                         Delete
                       </button>
-                      <button
-    onClick={() => router.push(`/analytics/${link._id}`)}
-    className="bg-purple-600 text-white px-3 py-1 rounded"
-  >
-    Analytics
-  </button>
+                      <button onClick={() => router.push(`/analytics/${link._id}`)} className="bg-purple-600 text-white px-3 py-1 rounded">
+                        Analytics
+                      </button>
                     </div>
                   </>
                 )}
@@ -238,5 +187,3 @@ const handleUpdate = async (_id: string) => {
     </div>
   );
 }
-
-

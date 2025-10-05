@@ -12,3 +12,6 @@ export const createUserSlice: StateCreator<UserSlice> = (set) => ({
   setUser: (user) => set({ user }),
   clearUser: () => set({ user: null }),
 });
+
+
+

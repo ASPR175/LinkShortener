@@ -35,7 +35,7 @@ func CreateSpace(c *fiber.Ctx) error {
 	workspace := models.Workspace{
 		ID:        primitive.NewObjectID(),
 		Name:      body.Name,
-		CreatedBy: userID,
+		UserID:    userID,
 		CreatedAt: time.Now(),
 	}
 	coll := db.GetCollection("workspaces")
@@ -62,7 +62,7 @@ func CreateSpace(c *fiber.Ctx) error {
 		"workspace": fiber.Map{
 			"_id":        workspace.ID.Hex(),
 			"name":       workspace.Name,
-			"created_by": workspace.CreatedBy.Hex(),
+			"created_by": workspace.UserID.Hex(),
 			"created_at": workspace.CreatedAt,
 		},
 		"member": fiber.Map{
@@ -125,7 +125,7 @@ func GetSpaces(c *fiber.Ctx) error {
 		workspaceList = append(workspaceList, fiber.Map{
 			"_id":        w.ID.Hex(),
 			"name":       w.Name,
-			"created_by": w.CreatedBy.Hex(),
+			"created_by": w.UserID.Hex(),
 			"created_at": w.CreatedAt,
 		})
 	}
@@ -197,7 +197,7 @@ func SpaceDetail(c *fiber.Ctx) error {
 		"workspace": fiber.Map{
 			"_id":        workspace.ID.Hex(),
 			"name":       workspace.Name,
-			"created_by": workspace.CreatedBy.Hex(),
+			"created_by": workspace.UserID.Hex(),
 			"created_at": workspace.CreatedAt,
 		},
 		"members": membersList,

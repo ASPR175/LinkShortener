@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -9,6 +10,9 @@ export default function Sidebar() {
   const currentWorkspaceId = useAppStore((s) => s.currentWorkspaceId);
   const pathname = usePathname();
 
+
+  const getWsId = (ws: typeof workspaces[number]) => String(ws._id);
+
   return (
     <aside className="w-64 bg-gray-100 border-r p-4 flex flex-col">
       <h2 className="text-lg font-bold mb-4">Your Workspaces</h2>
@@ -19,11 +23,9 @@ export default function Sidebar() {
         )}
 
         {workspaces.map((ws) => {
-          
-          const wsId = ws._id?.toString?.() || ws._id || "";
+          const wsId = getWsId(ws);
           const isActive =
-            wsId === currentWorkspaceId ||
-            pathname.startsWith(`/workspace/${wsId}`);
+            wsId === currentWorkspaceId || pathname.startsWith(`/workspace/${wsId}`);
 
           return (
             <Link
@@ -33,15 +35,13 @@ export default function Sidebar() {
                 isActive ? "bg-blue-500 text-white" : "hover:bg-gray-200"
               }`}
             >
-              {ws.name ?? "Unnamed"}
+              {ws.name || "Unnamed"}
             </Link>
           );
         })}
       </div>
 
-
-
-     <div className="mt-6">
+      <div className="mt-6">
         <h2 className="text-lg font-bold mb-2">Your Links</h2>
         <Link
           href="/links"
@@ -54,7 +54,6 @@ export default function Sidebar() {
           🔗 Links
         </Link>
       </div>
-
 
       <Link
         href="/workspace/new"

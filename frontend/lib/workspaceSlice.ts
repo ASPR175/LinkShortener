@@ -17,14 +17,14 @@ export type WorkspaceSlice = {
   fetchWorkspaceDetail: (id: string, token: string) => Promise<Workspace>;
 };
 
-export const createWorkspaceSlice: StateCreator<WorkspaceSlice> = (set) => ({
+export const createWorkspaceSlice: StateCreator<WorkspaceSlice> = (set,_get,_api) => ({
   workspaces: [],
   currentWorkspaceId: null,
 
   setWorkspaces: (ws) => set({ workspaces: ws }),
   setCurrentWorkspace: (id) => set({ currentWorkspaceId: id }),
 
-  // Combine add + update into a single, safe function
+
   addOrUpdateWorkspace: (workspace) =>
     set((state) => {
       const exists = state.workspaces.some((w) => w._id === workspace._id);

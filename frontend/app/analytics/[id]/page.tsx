@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import Sidebar from "@/components/sidebar";
 import Navbar from "@/components/navbar";
-import useAppStore from "@/lib/store";
+import {useAppStore} from "@/lib/store";
 
 interface AnalyticsData {
   clicks: number;

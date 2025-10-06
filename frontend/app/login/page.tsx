@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import useAppStore from "@/lib/store";
+import {useAppStore} from "@/lib/store";
 
 export default function LoginPage() {
   const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";

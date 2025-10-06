@@ -8,7 +8,7 @@ export type AnalyticsSlice = {
   clearAnalytics: () => void;
 };
 
-export const createAnalyticsSlice: StateCreator<AnalyticsSlice> = (set) => ({
+export const createAnalyticsSlice: StateCreator<AnalyticsSlice> = (set,_get,_api) => ({
   analytics: {},
 
   setAnalytics: (linkId, data) =>

@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import useAppStore from "@/lib/store";
+import { useAppStore } from "@/lib/store";
+import { Workspace } from "@/lib/types";
 
 export default function NewWorkspacePage() {
   const [name, setName] = useState("");
@@ -29,35 +30,36 @@ export default function NewWorkspacePage() {
 
       const data = await res.json();
 
-      const workspace = data.workspace;
-      const member = data.member;
+      const workspaceData = data.workspace;
+      const memberData = data.member;
 
-      if (!workspace?._id) throw new Error("Workspace ID not returned");
+      if (!workspaceData?._id) throw new Error("Workspace ID not returned");
 
-      const workspaceId = workspace._id.toString();
+      
+const workspaceObj: Workspace = {
+  _id: workspaceData._id.toString(),
+  name: workspaceData.name ?? "Unnamed",
+  role: "owner",  
+  links: [],
+  members: memberData
+    ? [
+        {
+          _id: memberData._id.toString(),
+          name: memberData.name ?? "Unnamed",
+          email: memberData.email ?? "",
+          avatarURL: memberData.avatarURL ?? "",
+          role: "admin", 
+        },
+      ]
+    : [],
+};
 
-      // Normalize workspace
-      useAppStore.getState().addWorkspace({
-        _id: workspaceId,
-        name: workspace.name ?? "Unnamed",
-        links: [],
-        role: "owner",
-        members: member
-          ? [
-              {
-                _id: member._id.toString(),
-                name: member.name ?? "Unnamed",
-                email: member.email ?? "",
-                avatarURL: member.avatarURL ?? "",
-                role: member.role ?? "owner",
-              },
-            ]
-          : [],
-      });
 
-      useAppStore.getState().setCurrentWorkspace(workspaceId);
 
-      router.push(`/workspace/${workspaceId}`);
+      useAppStore.getState().addOrUpdateWorkspace(workspaceObj);
+      useAppStore.getState().setCurrentWorkspace(workspaceObj._id);
+
+      router.push(`/workspace/${workspaceObj._id}`);
     } catch (err: any) {
       console.error(err);
       alert(err.message || "Failed to create workspace");

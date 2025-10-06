@@ -10,11 +10,11 @@ export type AppStore = UserSlice & LinkSlice & WorkspaceSlice & AnalyticsSlice;
 
 export const useAppStore = create<AppStore>()(
   persist(
-    (set, get) => ({
-      ...createUserSlice(set, get),
-      ...createLinkSlice(set, get),
-      ...createWorkspaceSlice(set, get),
-      ...createAnalyticsSlice(set, get),
+    (set,_get,_api) => ({
+      ...createUserSlice(set,_get,_api),
+      ...createLinkSlice(set,_get,_api),
+      ...createWorkspaceSlice(set,_get,_api),
+      ...createAnalyticsSlice(set,_get,_api),
     }),
     {
       name: "app-storage",

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/sidebar";
 import Navbar from "@/components/navbar";
-import useAppStore from "@/lib/store";
+import {useAppStore} from "@/lib/store";
 import { Link as LinkType } from "@/lib/types";
 
 export default function LinksPage() {
@@ -15,6 +15,9 @@ export default function LinksPage() {
   const [newLink, setNewLink] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
+
+
+
 
  
   useEffect(() => {
@@ -31,7 +34,7 @@ export default function LinksPage() {
         if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
 
         const data: LinkType[] = await res.json();
-        setLinks(data); 
+        setLinks(Array.isArray(data) ? data : [])
       } catch (err: any) {
         setError(err.message || "Failed to fetch links");
       } finally {
@@ -128,60 +131,73 @@ export default function LinksPage() {
             </button>
           </div>
 
-          <div className="grid gap-4">
-            {links.map((link) => (
-              <div key={link._id} className="border rounded p-4 shadow">
-                {editingId === link._id ? (
-                  <div className="flex gap-2">
-                    <input
-                      value={editValue}
-                      onChange={(e) => setEditValue(e.target.value)}
-                      className="border rounded p-2 flex-1"
-                    />
-                    <button onClick={() => handleUpdate(link._id)} className="bg-green-600 text-white px-3 py-1 rounded">
-                      Save
-                    </button>
-                    <button
-                      onClick={() => { setEditingId(null); setEditValue(""); }}
-                      className="bg-gray-400 text-white px-3 py-1 rounded"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <p>
-                      <strong>Short URL:</strong>{" "}
-                      <a
-                        href={`${process.env.NEXT_PUBLIC_BACKEND_URL}/${link.shortID}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 underline"
-                      >
-                        {`${process.env.NEXT_PUBLIC_BACKEND_URL}/${link.shortID}`}
-                      </a>
-                    </p>
-                    <p className="truncate"><strong>Original:</strong> {link.original}</p>
-                    <p><strong>Clicks:</strong> {link.clicks}</p>
-                    <p><strong>Created:</strong> {new Date(link.createdAt).toLocaleString()}</p>
-                    <p><strong>Updated:</strong> {link.updatedAt ? new Date(link.updatedAt).toLocaleString() : "-"}</p>
+<div className="grid gap-4">
+  {(links ?? []).map((link) => (
+    <div key={link._id} className="border rounded p-4 shadow">
+      {editingId === link._id ? (
+        <div className="flex gap-2">
+          <input
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            className="border rounded p-2 flex-1"
+          />
+          <button
+            onClick={() => handleUpdate(link._id)}
+            className="bg-green-600 text-white px-3 py-1 rounded"
+          >
+            Save
+          </button>
+          <button
+            onClick={() => { setEditingId(null); setEditValue(""); }}
+            className="bg-gray-400 text-white px-3 py-1 rounded"
+          >
+            Cancel
+          </button>
+        </div>
+      ) : (
+        <>
+          <p>
+            <strong>Short URL:</strong>{" "}
+            <a
+              href={`${process.env.NEXT_PUBLIC_BACKEND_URL}/${link.shortID}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 underline"
+            >
+              {`${process.env.NEXT_PUBLIC_BACKEND_URL}/${link.shortID}`}
+            </a>
+          </p>
+          <p className="truncate"><strong>Original:</strong> {link.original}</p>
+          <p><strong>Clicks:</strong> {link.clicks}</p>
+          <p><strong>Created:</strong> {new Date(link.createdAt).toLocaleString()}</p>
+          <p><strong>Updated:</strong> {link.updatedAt ? new Date(link.updatedAt).toLocaleString() : "-"}</p>
 
-                    <div className="flex gap-2 mt-2">
-                      <button onClick={() => { setEditingId(link._id); setEditValue(link.original); }} className="bg-yellow-500 text-white px-3 py-1 rounded">
-                        Edit
-                      </button>
-                      <button onClick={() => handleDelete(link._id)} className="bg-red-600 text-white px-3 py-1 rounded">
-                        Delete
-                      </button>
-                      <button onClick={() => router.push(`/analytics/${link._id}`)} className="bg-purple-600 text-white px-3 py-1 rounded">
-                        Analytics
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            ))}
+          <div className="flex gap-2 mt-2">
+            <button
+              onClick={() => { setEditingId(link._id); setEditValue(link.original); }}
+              className="bg-yellow-500 text-white px-3 py-1 rounded"
+            >
+              Edit
+            </button>
+            <button
+              onClick={() => handleDelete(link._id)}
+              className="bg-red-600 text-white px-3 py-1 rounded"
+            >
+              Delete
+            </button>
+            <button
+              onClick={() => router.push(`/analytics/${link._id}`)}
+              className="bg-purple-600 text-white px-3 py-1 rounded"
+            >
+              Analytics
+            </button>
           </div>
+        </>
+      )}
+    </div>
+  ))}
+</div>
+
         </div>
       </div>
     </div>

@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import useAppStore from "@/lib/store";
+import {useAppStore} from "@/lib/store";
 
 export default function Sidebar() {
   const workspaces = useAppStore((s) => s.workspaces);

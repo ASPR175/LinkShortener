@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Sidebar from "@/components/sidebar";
 import Navbar from "@/components/navbar";
-import useAppStore from "@/lib/store";
+import {useAppStore} from "@/lib/store";
 import Link from "next/link";
 import { normalizeLink } from "@/lib/linkSlice";
 
@@ -83,66 +83,6 @@ export default function WorkspacePage() {
     }
   };
 
-  // const handleDelete = async (_id: string) => {
-  //   if (!token || !workspace) return;
-
-  //   try {
-  //     const res = await fetch(
-  //       `${process.env.NEXT_PUBLIC_BACKEND_URL}/workspace/${workspace._id}/links/${_id}`,
-  //       { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }
-  //     );
-  //     if (!res.ok) throw new Error("Delete failed");
-
-  //     useAppStore.setState((state) => ({
-  //       workspaces: state.workspaces.map((w) =>
-  //         w._id === workspace._id
-  //           ? { ...w, links: w.links.filter((l) => l._id !== _id) }
-  //           : w
-  //       ),
-  //     }));
-  //   } catch (err: any) {
-  //     console.error(err);
-  //     setError(err.message || "Failed to delete link");
-  //   }
-  // };
-
-  // const handleUpdate = async (_id: string) => {
-  //   if (!editValue.trim() || !token || !workspace) return;
-
-  //   try {
-  //     const res = await fetch(
-  //       `${process.env.NEXT_PUBLIC_BACKEND_URL}/workspace/${workspace._id}/links/${_id}`,
-  //       {
-  //         method: "PATCH",
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //           Authorization: `Bearer ${token}`,
-  //         },
-  //         body: JSON.stringify({ original: editValue }),
-  //       }
-  //     );
-  //     if (!res.ok) throw new Error("Update failed");
-
-  //     useAppStore.setState((state) => ({
-  //       workspaces: state.workspaces.map((w) =>
-  //         w._id === workspace._id
-  //           ? {
-  //               ...w,
-  //               links: w.links.map((l) =>
-  //                 l._id === _id ? { ...l, original: editValue } : l
-  //               ),
-  //             }
-  //           : w
-  //       ),
-  //     }));
-
-  //     setEditingId(null);
-  //     setEditValue("");
-  //   } catch (err: any) {
-  //     console.error(err);
-  //     setError(err.message || "Failed to update link");
-  //   }
-  // };
 const handleDelete = async (_id: string) => {
   if (!token || !workspace) return;
 console.log("workspaceID from the hell:",workspace._id)
@@ -288,12 +228,12 @@ const handleUpdate = async (_id: string) => {
                     <p>
                       <strong>Short URL:</strong>{" "}
                       <a
-                        href={`${process.env.NEXT_PUBLIC_BACKEND_URL}/${link.short_id}`}
+                        href={`${process.env.NEXT_PUBLIC_BACKEND_URL}/${link.shortID}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-blue-600 underline"
                       >
-                        {`${process.env.NEXT_PUBLIC_BACKEND_URL}/${link.short_id}`}
+                        {`${process.env.NEXT_PUBLIC_BACKEND_URL}/${link.shortID}`}
                       </a>
                     </p>
                     <p className="truncate">
@@ -304,12 +244,12 @@ const handleUpdate = async (_id: string) => {
                     </p>
                     <p>
                       <strong>Created:</strong>{" "}
-                      {new Date(link.created_at).toLocaleString()}
+                      {new Date(link.createdAt).toLocaleString()}
                     </p>
                     <p>
                       <strong>Updated:</strong>{" "}
-                      {link.updated_at
-                        ? new Date(link.updated_at).toLocaleString()
+                      {link.updatedAt
+                        ? new Date(link.updatedAt).toLocaleString()
                         : "-"}
                     </p>
                     <div className="flex gap-2 mt-2">

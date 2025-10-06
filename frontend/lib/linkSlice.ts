@@ -21,7 +21,7 @@ export type LinkSlice = {
   removeLink: (id: string) => void;
 };
 
-export const createLinkSlice: StateCreator<LinkSlice> = (set) => ({
+export const createLinkSlice: StateCreator<LinkSlice> = (set,_get,_api) => ({
   links: [],
 
   setLinks: (links) => set({ links: links.map(normalizeLink) }),

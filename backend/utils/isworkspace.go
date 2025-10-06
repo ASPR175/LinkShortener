@@ -25,7 +25,7 @@ func IsWorkspaceAdmin(ctx context.Context, workspaceID, userID primitive.ObjectI
 		return false, errors.New("not a member of workspace")
 	}
 
-	if member.Role == "admin" {
+	if member.Role == "admin" || member.Role == "owner" {
 		return true, nil
 	}
 

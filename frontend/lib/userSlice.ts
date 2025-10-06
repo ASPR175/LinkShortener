@@ -7,7 +7,7 @@ export type UserSlice = {
   clearUser: () => void;
 };
 
-export const createUserSlice: StateCreator<UserSlice> = (set) => ({
+export const createUserSlice: StateCreator<UserSlice> = (set,_get,_api) => ({
   user: null,
   setUser: (user) => set({ user }),
   clearUser: () => set({ user: null }),

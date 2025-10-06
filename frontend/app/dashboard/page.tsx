@@ -30,7 +30,7 @@
 import { useEffect, useState } from "react";
 import Sidebar from "@/components/sidebar";
 import Navbar from "@/components/navbar";
-import useAppStore from "@/lib/store";
+import {useAppStore} from "@/lib/store";
 
 export default function DashboardPage() {
   const user = useAppStore((s) => s.user);
@@ -66,7 +66,7 @@ export default function DashboardPage() {
         <Navbar />
         <h1 className="text-2xl font-bold">Dashboard</h1>
         <div className="flex items-center gap-3">
-          <span>{user.Email}</span>
+          <span>{user.email}</span>
         </div>
       </div>
     </div>

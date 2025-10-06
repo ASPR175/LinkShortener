@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import useAppStore from "@/lib/store";
+import {useAppStore} from "@/lib/store";
 
 export default function Navbar() {
   const user = useAppStore((s) => s.user);

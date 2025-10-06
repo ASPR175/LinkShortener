@@ -3,7 +3,7 @@ import { useState,useEffect } from "react"
 import { useParams,useRouter } from "next/navigation"
 import Sidebar from "@/components/sidebar"
 import Navbar from "@/components/navbar"
-import useAppStore from "@/lib/store"
+import {useAppStore} from "@/lib/store"
 
 interface ReferrerData{
 referrer:string;

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import useAppStore from "@/lib/store";
+import {useAppStore} from "@/lib/store";
 
 export default function JoinWorkspacePage() {
   const searchParams = useSearchParams();

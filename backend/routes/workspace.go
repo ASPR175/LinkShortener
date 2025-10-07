@@ -9,17 +9,18 @@ import (
 )
 
 func WorkspaceRoutes(app *fiber.App) {
-	r := app.Group("/workspace", middleware.AuthRequired)
 
+	r := app.Group("/workspace", middleware.AuthRequired)
 	r.Post("/", handlers.CreateSpace)
 
 	r.Get("/", handlers.GetSpaces)
 	r.Get("/:id", handlers.SpaceDetail)
 	r.Get("/join/:token", handlers.AcceptInvite)
-	r.Post("/:id/members", middleware.RoleRequired("owner", "admin"), handlers.InviteMember)
-	r.Post("/invite/:inviteId/resend", middleware.RoleRequired("owner", "admin"), handlers.ResendInvite)
+	r.Post("/:id/members", middleware.RoleRequired("owner"), handlers.InviteMember)
+	r.Get("/:id/members", middleware.RoleRequired("owner"), handlers.GetWorkspaceMembers)
+	r.Post("/invite/:inviteId/resend", middleware.RoleRequired("owner"), handlers.ResendInvite)
 	r.Patch("/:id/members/:userId", middleware.RoleRequired("owner", "admin"), handlers.UpdateRole)
-	r.Delete("/:id/members/:userId", middleware.RoleRequired("owner", "admin"), handlers.RemoveMember)
+	r.Delete("/:id/members/:userId", middleware.RoleRequired("owner"), handlers.RemoveMember)
 	r.Post("/:id/links", middleware.RoleRequired("member", "admin", "owner"), handlers.CreateWorkspaceLink)
 	r.Get("/:id/links", middleware.RoleRequired("member", "admin", "owner"), handlers.GetLinks)
 	r.Patch("/:id/links/:linkId", middleware.RoleRequired("admin", "owner"), handlers.UpdateWorkspaceLink)

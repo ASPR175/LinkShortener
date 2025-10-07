@@ -16,5 +16,5 @@ type Link struct {
 	ShortID     string              `bson:"short_id" json:"short_id"`
 	Clicks      int                 `bson:"clicks" json:"clicks"`
 	CreatedAt   time.Time           `bson:"created_at" json:"created_at"`
-	UpdatedAt   time.Time           `bson:"updated_at" json:"updated_at"`
+	UpdatedAt   time.Time           `bson:"updated_at,omitempty" json:"updated_at,omitempty"`
 }

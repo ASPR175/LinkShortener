@@ -6,6 +6,7 @@ import Sidebar from "@/components/sidebar";
 import Navbar from "@/components/navbar";
 import {useAppStore} from "@/lib/store";
 import { Link as LinkType } from "@/lib/types";
+import { normalizeLink } from "@/lib/linkSlice";
 
 export default function LinksPage() {
   const router = useRouter();
@@ -61,7 +62,7 @@ export default function LinksPage() {
       if (!res.ok) throw new Error("Create failed");
 
       const data: LinkType = await res.json();
-      addOrUpdateLink(data); 
+      addOrUpdateLink(normalizeLink(data)); 
       setNewLink("");
     } catch (err: any) {
       setError(err.message || "Failed to create link");

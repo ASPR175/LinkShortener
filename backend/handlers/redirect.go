@@ -44,7 +44,10 @@ func Redirect(c *fiber.Ctx) error {
 
 	country := utils.LookupCountry(ip)
 	browser, device := utils.ParseUserAgent(ua)
-
+	fmt.Println("User-Agent:", ua)
+	fmt.Println("Parsed Browser:", browser)
+	fmt.Println("Parsed Device:", device)
+	fmt.Println("Country:", country)
 	click := models.ClickEvent{
 		ID:        primitive.NewObjectID(),
 		LinkID:    link.ID,

@@ -4,7 +4,6 @@ import (
 	"linkshortener/db"
 	"linkshortener/models"
 	"linkshortener/utils"
-	"os"
 	"strings"
 	"time"
 
@@ -51,6 +50,7 @@ func CreateLink(c *fiber.Ctx) error {
 		ShortID:     shortID,
 		Clicks:      0,
 		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
 	}
 
 	coll := db.GetCollection("links")
@@ -60,10 +60,11 @@ func CreateLink(c *fiber.Ctx) error {
 
 	return c.JSON(fiber.Map{
 		"_id":        link.ID.Hex(),
-		"short_id":   os.Getenv("APP_BASE_URL") + "/" + link.ShortID,
+		"short_id":   link.ShortID,
 		"original":   link.Original,
 		"clicks":     link.Clicks,
 		"created_at": link.CreatedAt,
+		"updated_at": link.UpdatedAt,
 	})
 }
 
@@ -239,6 +240,7 @@ func CreateWorkspaceLink(c *fiber.Ctx) error {
 		ShortID:     shortID,
 		Clicks:      0,
 		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
 	}
 
 	coll := db.GetCollection("links")
@@ -253,6 +255,7 @@ func CreateWorkspaceLink(c *fiber.Ctx) error {
 		"original":   link.Original,
 		"clicks":     link.Clicks,
 		"created_at": link.CreatedAt,
+		"updated_at": link.UpdatedAt,
 	})
 }
 

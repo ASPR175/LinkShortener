@@ -5,7 +5,7 @@ import { Link } from "./types";
 export function normalizeLink(apiLink: any): Link {
   return {
     _id: apiLink._id?.toString() ?? apiLink.ID?.toString() ?? "",
-    shortID: apiLink.short_id ?? apiLink.ShortID ?? "",
+    shortID: apiLink.short_id ?? apiLink.ShortID,
     original: apiLink.original ?? apiLink.Original ?? "",
     clicks: apiLink.clicks ?? apiLink.Clicks ?? 0,
     createdAt: apiLink.created_at ?? apiLink.CreatedAt ?? new Date().toISOString(),
@@ -39,7 +39,7 @@ addOrUpdateLink: (link) =>
       
       const normalized: Link = {
         _id: link._id ?? crypto.randomUUID(),
-        shortID: link.shortID ?? "",
+        shortID: link.shortID || "",
         original: link.original ?? "",
         clicks: link.clicks ?? 0,
         createdAt: link.createdAt ?? new Date().toISOString(),

@@ -208,7 +208,6 @@ func SpaceDetail(c *fiber.Ctx) error {
 
 // ///////////////////
 func InviteMember(c *fiber.Ctx) error {
-	// Extract user info from JWT claims
 	claims := c.Locals("user").(jwt.MapClaims)
 	userID, err := primitive.ObjectIDFromHex(claims["id"].(string))
 	if err != nil {
@@ -227,6 +226,16 @@ func InviteMember(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "email required"})
 	}
 
+	inviteColl := db.GetCollection("workspace_invites")
+	count, _ := inviteColl.CountDocuments(context.TODO(), bson.M{
+		"workspace_id": workspaceID,
+		"email":        body.Email,
+		"status":       "pending",
+	})
+	if count > 0 {
+		return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "pending invite already exists"})
+	}
+
 	token := primitive.NewObjectID().Hex()
 	now := time.Now()
 
@@ -242,24 +251,21 @@ func InviteMember(c *fiber.Ctx) error {
 		ExpiresAt:   now.Add(48 * time.Hour),
 	}
 
-	coll := db.GetCollection("workspace_invites")
-	_, err = coll.InsertOne(context.TODO(), invite)
+	_, err = inviteColl.InsertOne(context.TODO(), invite)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to save invite"})
 	}
 
-	inviteLink := fmt.Sprintf(os.Getenv("FRONTEND_URL")+"/join?token=%s", token)
-	client := resend.NewClient(os.Getenv("RESEND_API_KEY"))
+	inviteLink := fmt.Sprintf("%s/join?token=%s", os.Getenv("FRONTEND_URL"), token)
 
+	client := resend.NewClient(os.Getenv("RESEND_API_KEY"))
 	params := &resend.SendEmailRequest{
 		From:    "Workspace Invites <no-reply@xyz.com>",
 		To:      []string{body.Email},
 		Subject: "You’ve been invited to a workspace",
-		Html:    fmt.Sprintf("<p>You’ve been invited to join a workspace. <a href='%s'>Accept Invite</a></p>", inviteLink),
+		Html:    fmt.Sprintf("<p>You’ve been invited! <a href='%s'>Accept Invite</a></p>", inviteLink),
 	}
-
-	_, err = client.Emails.SendWithContext(context.TODO(), params)
-	if err != nil {
+	if _, err = client.Emails.SendWithContext(context.TODO(), params); err != nil {
 		return c.Status(fiber.StatusBadGateway).JSON(fiber.Map{"error": "failed to send email"})
 	}
 
@@ -269,18 +275,15 @@ func InviteMember(c *fiber.Ctx) error {
 // ///////////////////////////
 func AcceptInvite(c *fiber.Ctx) error {
 	claims := c.Locals("user").(jwt.MapClaims)
-	userID, err := primitive.ObjectIDFromHex(claims["id"].(string))
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid user id"})
-	}
+	userID, _ := primitive.ObjectIDFromHex(claims["id"].(string))
 	userEmail := claims["email"].(string)
 
 	token := c.Params("token")
 	inviteColl := db.GetCollection("workspace_invites")
+	memberColl := db.GetCollection("workspace_members")
 
 	var invite models.WorkspaceInvite
-	err = inviteColl.FindOne(context.TODO(), bson.M{"token": token, "status": "pending"}).Decode(&invite)
-	if err != nil {
+	if err := inviteColl.FindOne(context.TODO(), bson.M{"token": token, "status": "pending"}).Decode(&invite); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid or expired invite"})
 	}
 
@@ -292,8 +295,15 @@ func AcceptInvite(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "invite not for this email"})
 	}
 
-	memberColl := db.GetCollection("workspace_members")
-	_, err = memberColl.InsertOne(context.TODO(), models.WorkspaceMember{
+	count, _ := memberColl.CountDocuments(context.TODO(), bson.M{
+		"workspace_id": invite.WorkspaceID,
+		"user_id":      userID,
+	})
+	if count > 0 {
+		return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "user already a member"})
+	}
+
+	_, err := memberColl.InsertOne(context.TODO(), models.WorkspaceMember{
 		ID:          primitive.NewObjectID(),
 		WorkspaceID: invite.WorkspaceID,
 		UserID:      userID,
@@ -304,25 +314,17 @@ func AcceptInvite(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to add member"})
 	}
 
-	_, _ = inviteColl.UpdateOne(context.TODO(),
-		bson.M{"_id": invite.ID},
-		bson.M{"$set": bson.M{"status": "accepted"}},
-	)
+	_, _ = inviteColl.UpdateOne(context.TODO(), bson.M{"_id": invite.ID}, bson.M{"$set": bson.M{"status": "accepted"}})
 
 	return c.JSON(fiber.Map{"message": "joined workspace"})
 }
 
 func ResendInvite(c *fiber.Ctx) error {
-	inviteID, err := primitive.ObjectIDFromHex(c.Params("inviteId"))
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid invite id"})
-	}
-
+	inviteID, _ := primitive.ObjectIDFromHex(c.Params("inviteId"))
 	inviteColl := db.GetCollection("workspace_invites")
 
 	var invite models.WorkspaceInvite
-	err = inviteColl.FindOne(context.TODO(), bson.M{"_id": inviteID}).Decode(&invite)
-	if err != nil {
+	if err := inviteColl.FindOne(context.TODO(), bson.M{"_id": inviteID}).Decode(&invite); err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "invite not found"})
 	}
 
@@ -334,32 +336,22 @@ func ResendInvite(c *fiber.Ctx) error {
 			"status":     "pending",
 		},
 	}
-	_, err = inviteColl.UpdateByID(context.TODO(), inviteID, update)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to update invite"})
-	}
+	_, _ = inviteColl.UpdateByID(context.TODO(), inviteID, update)
 
-	inviteLink := fmt.Sprintf(os.Getenv("FRONTEND_URL")+"/join?token=%s", invite.Token)
+	inviteLink := fmt.Sprintf("%s/join?token=%s", os.Getenv("FRONTEND_URL"), invite.Token)
 
 	client := resend.NewClient(os.Getenv("RESEND_API_KEY"))
-
 	params := &resend.SendEmailRequest{
 		From:    "Workspace Invites <no-reply@xyz.com>",
 		To:      []string{invite.Email},
 		Subject: "Your workspace invite has been resent",
-		Html:    fmt.Sprintf("<p>You’ve been invited again! <a href='%s'>Click here to join</a></p>", inviteLink),
+		Html:    fmt.Sprintf("<p>You’ve been invited again! <a href='%s'>Join now</a></p>", inviteLink),
 	}
-
-	_, err = client.Emails.SendWithContext(context.TODO(), params)
-	if err != nil {
+	if _, err := client.Emails.SendWithContext(context.TODO(), params); err != nil {
 		return c.Status(fiber.StatusBadGateway).JSON(fiber.Map{"error": "failed to resend email"})
 	}
 
-	return c.JSON(fiber.Map{
-		"message": "invite resent",
-		"email":   invite.Email,
-		"link":    inviteLink,
-	})
+	return c.JSON(fiber.Map{"message": "invite resent", "email": invite.Email, "link": inviteLink})
 }
 
 // //////////////////////////////////////
@@ -371,32 +363,108 @@ func UpdateRole(c *fiber.Ctx) error {
 		Role string `json:"role"`
 	}
 	if err := c.BodyParser(&body); err != nil || body.Role == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Role required"})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "role required"})
+	}
+
+	validRoles := map[string]bool{"owner": true, "admin": true, "member": true}
+	if !validRoles[body.Role] {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid role"})
 	}
 
 	memberColl := db.GetCollection("workspace_members")
-	_, err := memberColl.UpdateOne(
-		context.TODO(),
+	_, err := memberColl.UpdateOne(context.TODO(),
 		bson.M{"workspace_id": workspaceID, "user_id": userID},
 		bson.M{"$set": bson.M{"role": body.Role}},
 	)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to update the role"})
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to update role"})
 	}
 
-	return c.JSON(fiber.Map{"message": "Role Updated"})
+	return c.JSON(fiber.Map{"message": "role updated"})
 }
 
 func RemoveMember(c *fiber.Ctx) error {
-
 	workspaceID, _ := primitive.ObjectIDFromHex(c.Params("id"))
 	userID, _ := primitive.ObjectIDFromHex(c.Params("userId"))
+
 	memberColl := db.GetCollection("workspace_members")
-	_, err := memberColl.DeleteOne(context.TODO(), bson.M{"workspace_id": workspaceID, "user_id": userID})
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to delete the Member"})
+	res, err := memberColl.DeleteOne(context.TODO(), bson.M{"workspace_id": workspaceID, "user_id": userID})
+	if err != nil || res.DeletedCount == 0 {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to remove member"})
 	}
+
+	return c.JSON(fiber.Map{"message": "member removed"})
+}
+func GetWorkspaceMembers(c *fiber.Ctx) error {
+	workspaceIDStr := c.Params("id")
+	workspaceID, err := primitive.ObjectIDFromHex(workspaceIDStr)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid workspace id"})
+	}
+
+	memberColl := db.GetCollection("workspace_members")
+	inviteColl := db.GetCollection("workspace_invites")
+	// userColl := db.GetCollection("users")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	pipeline := []bson.M{
+		{"$match": bson.M{"workspace_id": workspaceID}},
+		{"$lookup": bson.M{
+			"from":         "users",
+			"localField":   "user_id",
+			"foreignField": "_id",
+			"as":           "user",
+		}},
+		{"$unwind": "$user"},
+		{"$project": bson.M{
+			"_id":       1,
+			"role":      1,
+			"joined_at": 1,
+			"userId":    "$user._id",
+			"name":      "$user.name",
+			"email":     "$user.email",
+			"avatarURL": "$user.avatarURL",
+		}},
+	}
+
+	cur, err := memberColl.Aggregate(ctx, pipeline)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to fetch members"})
+	}
+	defer cur.Close(ctx)
+
+	var members []map[string]interface{}
+	if err := cur.All(ctx, &members); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to parse members"})
+	}
+
+	inviteCursor, err := inviteColl.Find(ctx, bson.M{"workspace_id": workspaceID, "status": "pending"})
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to fetch invites"})
+	}
+	defer inviteCursor.Close(ctx)
+
+	var invites []map[string]interface{}
+	for inviteCursor.Next(ctx) {
+		var inv models.WorkspaceInvite
+		if err := inviteCursor.Decode(&inv); err != nil {
+			continue
+		}
+		invites = append(invites, map[string]interface{}{
+			"_id":       inv.ID.Hex(),
+			"email":     inv.Email,
+			"role":      inv.Role,
+			"token":     inv.Token,
+			"status":    inv.Status,
+			"invitedBy": inv.InvitedBy.Hex(),
+			"expiresAt": inv.ExpiresAt,
+		})
+	}
+
 	return c.JSON(fiber.Map{
-		"message": "Member Removed",
+		"members": members,
+		"invites": invites,
 	})
 }

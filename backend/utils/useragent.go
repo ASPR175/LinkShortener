@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"fmt"
+
 	"github.com/mssola/user_agent"
 )
 
@@ -24,6 +26,6 @@ func ParseUserAgent(ua string) (browser, device string) {
 	} else {
 		device = "Desktop"
 	}
-
+	fmt.Println("name", name)
 	return name, device
 }

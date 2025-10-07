@@ -40,3 +40,14 @@ export type Workspace = {
   links: Link[];
   members: WorkspaceMember[];
 };
+export type WorkspaceInvite = {
+  _id: string;           
+  workspaceID: string;    
+  email: string;          
+  role: "owner" | "admin" | "member"; 
+  token: string;          
+  status: "pending" | "accepted" | "expired"; 
+  invitedBy: string;      
+  createdAt: string;      
+  expiresAt: string;      
+};

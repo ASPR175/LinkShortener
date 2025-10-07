@@ -4,7 +4,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {useAppStore} from "@/lib/store";
-
+import { useEffect } from "react";
 export default function Sidebar() {
   const workspaces = useAppStore((s) => s.workspaces);
   const currentWorkspaceId = useAppStore((s) => s.currentWorkspaceId);
@@ -12,6 +12,11 @@ export default function Sidebar() {
 
 
   const getWsId = (ws: typeof workspaces[number]) => String(ws._id);
+  useEffect(() => {
+  const { user, workspaces, fetchWorkspaces } = useAppStore.getState();
+  if (user && workspaces.length === 0) fetchWorkspaces(user.token);
+}, []);
+
 
   return (
     <aside className="w-64 bg-gray-100 border-r p-4 flex flex-col">

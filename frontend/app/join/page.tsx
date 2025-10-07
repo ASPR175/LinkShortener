@@ -11,7 +11,7 @@ export default function JoinWorkspacePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-
+  const {user} = useAppStore();
   const setUser = useAppStore((state) => state.setUser);
   const router = useRouter();
 
@@ -24,13 +24,13 @@ export default function JoinWorkspacePage() {
 
     const joinWorkspace = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/workspace/join`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ token }),
-        });
+       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/workspace/join/${token}`, {
+  method: "GET",
+  headers: {
+    Authorization: `Bearer ${user?.token}`, 
+  },
+});
+
 
         const data = await res.json();
 

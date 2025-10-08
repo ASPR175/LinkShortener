@@ -404,7 +404,6 @@ func GetWorkspaceMembers(c *fiber.Ctx) error {
 
 	memberColl := db.GetCollection("workspace_members")
 	inviteColl := db.GetCollection("workspace_invites")
-	// userColl := db.GetCollection("users")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -452,6 +451,7 @@ func GetWorkspaceMembers(c *fiber.Ctx) error {
 		if err := inviteCursor.Decode(&inv); err != nil {
 			continue
 		}
+
 		invites = append(invites, map[string]interface{}{
 			"_id":       inv.ID.Hex(),
 			"email":     inv.Email,
@@ -467,4 +467,24 @@ func GetWorkspaceMembers(c *fiber.Ctx) error {
 		"members": members,
 		"invites": invites,
 	})
+}
+func GetWorkspaceInvites(c *fiber.Ctx) error {
+	workspaceID, err := primitive.ObjectIDFromHex(c.Params("id"))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid workspace id"})
+	}
+
+	coll := db.GetCollection("workspace_invites")
+	cursor, err := coll.Find(context.TODO(), bson.M{"workspace_id": workspaceID, "status": "pending"})
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to fetch invites"})
+	}
+	defer cursor.Close(context.TODO())
+
+	var invites []models.WorkspaceInvite
+	if err := cursor.All(context.TODO(), &invites); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to parse invites"})
+	}
+
+	return c.JSON(fiber.Map{"invites": invites})
 }

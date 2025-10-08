@@ -3,17 +3,22 @@ import { WorkspaceInvite } from "@/lib/types";
 
 export type InviteSlice = {
   invites: WorkspaceInvite[];
-  
-  setInvites: (invites: WorkspaceInvite[]) => void;
+
+  setInvites: (invites: WorkspaceInvite[] | ((prev: WorkspaceInvite[]) => WorkspaceInvite[])) => void;
   addOrUpdateInvite: (invite: WorkspaceInvite) => void;
   removeInvite: (id: string) => void;
   getInviteByToken: (token: string) => WorkspaceInvite | undefined;
+  getPendingInvites: () => WorkspaceInvite[];
+  clearInvites: () => void;
 };
 
-export const createInviteSlice: StateCreator<InviteSlice> = (set, _get, _api) => ({
+export const createInviteSlice: StateCreator<InviteSlice> = (set, get, _api) => ({
   invites: [],
 
-  setInvites: (invites) => set({ invites }),
+  setInvites: (invites) =>
+    set((state) => ({
+      invites: typeof invites === "function" ? invites(state.invites) : invites,
+    })),
 
   addOrUpdateInvite: (invite) =>
     set((state) => {
@@ -30,6 +35,9 @@ export const createInviteSlice: StateCreator<InviteSlice> = (set, _get, _api) =>
       invites: state.invites.filter((i) => i._id !== id),
     })),
 
-  getInviteByToken: (token) =>
-    _get().invites.find((i) => i.token === token),
+  getInviteByToken: (token) => get().invites.find((i) => i.token === token),
+
+  getPendingInvites: () => get().invites.filter((i) => i.status === "pending"),
+
+  clearInvites: () => set({ invites: [] }),
 });

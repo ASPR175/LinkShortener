@@ -12,12 +12,12 @@ func WorkspaceRoutes(app *fiber.App) {
 
 	r := app.Group("/workspace", middleware.AuthRequired)
 	r.Post("/", handlers.CreateSpace)
-
+	r.Get("/join/:token", handlers.AcceptInvite)
 	r.Get("/", handlers.GetSpaces)
 	r.Get("/:id", handlers.SpaceDetail)
-	r.Get("/join/:token", handlers.AcceptInvite)
 	r.Post("/:id/members", middleware.RoleRequired("owner"), handlers.InviteMember)
-	r.Get("/:id/members", middleware.RoleRequired("owner"), handlers.GetWorkspaceMembers)
+	r.Get("/:id/members", handlers.GetWorkspaceMembers)
+	r.Get("/:id/invites", middleware.RoleRequired("owner", "admin"), handlers.GetWorkspaceInvites)
 	r.Post("/invite/:inviteId/resend", middleware.RoleRequired("owner"), handlers.ResendInvite)
 	r.Patch("/:id/members/:userId", middleware.RoleRequired("owner", "admin"), handlers.UpdateRole)
 	r.Delete("/:id/members/:userId", middleware.RoleRequired("owner"), handlers.RemoveMember)

@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"linkshortener/db"
 	"linkshortener/models"
+
 	"os"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
+
 	"github.com/resend/resend-go/v2"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -209,7 +211,7 @@ func SpaceDetail(c *fiber.Ctx) error {
 // ///////////////////
 func InviteMember(c *fiber.Ctx) error {
 	claims := c.Locals("user").(jwt.MapClaims)
-	userID, err := primitive.ObjectIDFromHex(claims["id"].(string))
+	userID, err := primitive.ObjectIDFromHex(claims["user_id"].(string))
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid user id"})
 	}
@@ -257,10 +259,12 @@ func InviteMember(c *fiber.Ctx) error {
 	}
 
 	inviteLink := fmt.Sprintf("%s/join?token=%s", os.Getenv("FRONTEND_URL"), token)
-
+	fmt.Println("Sending invite to:", body.Email)
+	fmt.Println("Using API key:", os.Getenv("RESEND_API_KEY"))
+	fmt.Println("Invite link:", inviteLink)
 	client := resend.NewClient(os.Getenv("RESEND_API_KEY"))
 	params := &resend.SendEmailRequest{
-		From:    "Workspace Invites <no-reply@xyz.com>",
+		From:    "Acme <onboarding@resend.dev>",
 		To:      []string{body.Email},
 		Subject: "You’ve been invited to a workspace",
 		Html:    fmt.Sprintf("<p>You’ve been invited! <a href='%s'>Accept Invite</a></p>", inviteLink),
@@ -269,13 +273,13 @@ func InviteMember(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadGateway).JSON(fiber.Map{"error": "failed to send email"})
 	}
 
-	return c.JSON(fiber.Map{"message": "invite sent", "email": body.Email})
+	return c.JSON(fiber.Map{"message": "invite sent", "invite": invite})
 }
 
 // ///////////////////////////
 func AcceptInvite(c *fiber.Ctx) error {
 	claims := c.Locals("user").(jwt.MapClaims)
-	userID, _ := primitive.ObjectIDFromHex(claims["id"].(string))
+	userID, _ := primitive.ObjectIDFromHex(claims["user_id"].(string))
 	userEmail := claims["email"].(string)
 
 	token := c.Params("token")
@@ -342,7 +346,7 @@ func ResendInvite(c *fiber.Ctx) error {
 
 	client := resend.NewClient(os.Getenv("RESEND_API_KEY"))
 	params := &resend.SendEmailRequest{
-		From:    "Workspace Invites <no-reply@xyz.com>",
+		From:    "Acme <onboarding@resend.dev>",
 		To:      []string{invite.Email},
 		Subject: "Your workspace invite has been resent",
 		Html:    fmt.Sprintf("<p>You’ve been invited again! <a href='%s'>Join now</a></p>", inviteLink),
@@ -416,7 +420,10 @@ func GetWorkspaceMembers(c *fiber.Ctx) error {
 			"foreignField": "_id",
 			"as":           "user",
 		}},
-		{"$unwind": "$user"},
+		{"$unwind": bson.M{
+			"path":                       "$user",
+			"preserveNullAndEmptyArrays": true,
+		}},
 		{"$project": bson.M{
 			"_id":       1,
 			"role":      1,
@@ -439,6 +446,19 @@ func GetWorkspaceMembers(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to parse members"})
 	}
 
+	for i, m := range members {
+		if m["name"] == nil {
+			m["name"] = "Unknown"
+		}
+		if m["email"] == nil {
+			m["email"] = ""
+		}
+		if m["avatarURL"] == nil {
+			m["avatarURL"] = ""
+		}
+		members[i] = m
+	}
+
 	inviteCursor, err := inviteColl.Find(ctx, bson.M{"workspace_id": workspaceID, "status": "pending"})
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to fetch invites"})
@@ -451,7 +471,6 @@ func GetWorkspaceMembers(c *fiber.Ctx) error {
 		if err := inviteCursor.Decode(&inv); err != nil {
 			continue
 		}
-
 		invites = append(invites, map[string]interface{}{
 			"_id":       inv.ID.Hex(),
 			"email":     inv.Email,
@@ -468,6 +487,7 @@ func GetWorkspaceMembers(c *fiber.Ctx) error {
 		"invites": invites,
 	})
 }
+
 func GetWorkspaceInvites(c *fiber.Ctx) error {
 	workspaceID, err := primitive.ObjectIDFromHex(c.Params("id"))
 	if err != nil {

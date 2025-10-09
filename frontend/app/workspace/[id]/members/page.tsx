@@ -95,7 +95,8 @@ const sendInvite = async (email: string) => {
       headers: { Authorization: `Bearer ${user.token}`, "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
     });
-
+console.log(res)
+console.log(res.status)
     if (!res.ok) {
       const errData = await res.json();
       throw new Error(errData.error || "Failed to send invite");
@@ -113,7 +114,7 @@ const sendInvite = async (email: string) => {
       createdAt: data.createdAt,
       expiresAt: data.expiresAt,
     };
-
+console.log("data:",data)
     addOrUpdateInvite(newInvite);
     setInviteEmail("");
   } catch (err: any) {
@@ -165,9 +166,9 @@ const resendInvite = async (inviteId: string) => {
         <div>
           <h2 className="text-lg font-semibold mt-6">Pending Invites</h2>
           <ul className="space-y-2">
-            {invites.map((i) => (
+            {invites.map((i,idx) => (
               <li
-                key={i._id}
+                key={i._id ?? i.email ?? idx}
                 className="flex items-center justify-between border p-2 rounded"
               >
                 <span>
@@ -189,9 +190,9 @@ const resendInvite = async (inviteId: string) => {
       <div>
         <h2 className="text-lg font-semibold mt-6">Members</h2>
         <ul className="space-y-2">
-          {members.map((m) => (
+          {members.map((m,idx) => (
             <li
-              key={m._id}
+              key={m._id ?? m.email ?? idx}
               className="flex items-center justify-between border p-2 rounded"
             >
               <span>

@@ -6,6 +6,7 @@ import (
 	"linkshortener/db"
 	"linkshortener/models"
 
+	"encoding/base64"
 	"os"
 	"time"
 
@@ -358,10 +359,21 @@ func ResendInvite(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"message": "invite resent", "email": invite.Email, "link": inviteLink})
 }
 
-// //////////////////////////////////////
 func UpdateRole(c *fiber.Ctx) error {
-	workspaceID, _ := primitive.ObjectIDFromHex(c.Params("id"))
-	userID, _ := primitive.ObjectIDFromHex(c.Params("userId"))
+	workspaceIDParam := c.Params("id")
+	userIDParam := c.Params("userId")
+
+	decodedWorkspaceID, err := base64.StdEncoding.DecodeString(workspaceIDParam)
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "invalid workspaceId"})
+	}
+	decodedUserID, err := base64.StdEncoding.DecodeString(userIDParam)
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "invalid userId"})
+	}
+
+	workspaceID := primitive.Binary{Subtype: 0x00, Data: decodedWorkspaceID}
+	userID := primitive.Binary{Subtype: 0x00, Data: decodedUserID}
 
 	var body struct {
 		Role string `json:"role"`
@@ -376,29 +388,51 @@ func UpdateRole(c *fiber.Ctx) error {
 	}
 
 	memberColl := db.GetCollection("workspace_members")
-	_, err := memberColl.UpdateOne(context.TODO(),
+	res, err := memberColl.UpdateOne(
+		context.TODO(),
 		bson.M{"workspace_id": workspaceID, "user_id": userID},
 		bson.M{"$set": bson.M{"role": body.Role}},
 	)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to update role"})
 	}
+	if res.MatchedCount == 0 {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "member not found"})
+	}
 
 	return c.JSON(fiber.Map{"message": "role updated"})
 }
 
 func RemoveMember(c *fiber.Ctx) error {
-	workspaceID, _ := primitive.ObjectIDFromHex(c.Params("id"))
-	userID, _ := primitive.ObjectIDFromHex(c.Params("userId"))
+	workspaceIDParam := c.Params("id")
+	userIDParam := c.Params("userId")
+
+	decodedWorkspaceID, err := base64.StdEncoding.DecodeString(workspaceIDParam)
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "invalid workspaceId"})
+	}
+	decodedUserID, err := base64.StdEncoding.DecodeString(userIDParam)
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "invalid userId"})
+	}
+
+	workspaceID := primitive.Binary{Subtype: 0x00, Data: decodedWorkspaceID}
+	userID := primitive.Binary{Subtype: 0x00, Data: decodedUserID}
 
 	memberColl := db.GetCollection("workspace_members")
-	res, err := memberColl.DeleteOne(context.TODO(), bson.M{"workspace_id": workspaceID, "user_id": userID})
-	if err != nil || res.DeletedCount == 0 {
+	res, err := memberColl.DeleteOne(context.TODO(),
+		bson.M{"workspace_id": workspaceID, "user_id": userID},
+	)
+	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to remove member"})
+	}
+	if res.DeletedCount == 0 {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "member not found"})
 	}
 
 	return c.JSON(fiber.Map{"message": "member removed"})
 }
+
 func GetWorkspaceMembers(c *fiber.Ctx) error {
 	workspaceIDStr := c.Params("id")
 	workspaceID, err := primitive.ObjectIDFromHex(workspaceIDStr)

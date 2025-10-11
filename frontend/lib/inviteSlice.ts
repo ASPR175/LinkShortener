@@ -20,15 +20,35 @@ export const createInviteSlice: StateCreator<InviteSlice> = (set, get, _api) => 
       invites: typeof invites === "function" ? invites(state.invites) : invites,
     })),
 
-  addOrUpdateInvite: (invite) =>
-    set((state) => {
-      const exists = state.invites.some((i) => i._id === invite._id);
-      return {
-        invites: exists
-          ? state.invites.map((i) => (i._id === invite._id ? invite : i))
-          : [...state.invites, invite],
-      };
-    }),
+  // addOrUpdateInvite: (invite) =>
+  //   set((state) => {
+  //     const exists = state.invites.some((i) => i._id === invite._id);
+  //     return {
+  //       invites: exists
+  //         ? state.invites.map((i) => (i._id === invite._id ? invite : i))
+  //         : [...state.invites, invite],
+  //     };
+  //   }),
+addOrUpdateInvite: (invite) =>
+  set((state) => {
+   
+    const safeId =
+      typeof invite._id === "string"
+        ? invite._id
+        : String(invite._id|| invite._id || crypto.randomUUID());
+
+    const normalizedInvite = { ...invite, _id: safeId };
+
+    const exists = state.invites.some((i) => i._id === safeId);
+
+    return {
+      invites: exists
+        ? state.invites.map((i) =>
+            i._id === safeId ? normalizedInvite : i
+          )
+        : [...state.invites, normalizedInvite],
+    };
+  }),
 
   removeInvite: (id) =>
     set((state) => ({

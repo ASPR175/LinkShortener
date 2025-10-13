@@ -68,9 +68,10 @@ setMembers((memberData.members || []).map(normalizeMember));
 
   const updateRole = async (userId: string, role: "member" | "admin") => {
     if (!workspaceId || !user?.token) return;
+    const encodedUserId = encodeURIComponent(userId); 
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/workspace/${workspaceId}/members/${userId}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/workspace/${workspaceId}/members/${encodedUserId}`,
         {
           method: "PATCH",
           headers: {
@@ -94,9 +95,10 @@ setMembers((memberData.members || []).map(normalizeMember));
 
   const removeMember = async (userId: string) => {
     if (!workspaceId || !user?.token) return;
+    const encodedUserId = encodeURIComponent(userId); 
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/workspace/${workspaceId}/members/${userId}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/workspace/${workspaceId}/members/${encodedUserId}`,
         { method: "DELETE", headers: { Authorization: `Bearer ${user.token}` } }
       );
       if (res.ok) setMembers(prev => prev.filter(m => m.userId !== userId));

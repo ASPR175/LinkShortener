@@ -17,12 +17,11 @@ export default function JoinWorkspacePage() {
 
   useEffect(() => {
     if (!token) {
-      setError("No token provided");
+      setError("No token provided.");
       setLoading(false);
       return;
     }
 
-    // Prompt login if user is not logged in
     if (!user) {
       setError("You need to be logged in to accept this invite.");
       setLoading(false);
@@ -44,16 +43,15 @@ export default function JoinWorkspacePage() {
         const data = await res.json();
 
         if (!res.ok) {
-          setError(data.error || "Failed to join workspace");
+          setError(data.error || "Failed to join workspace.");
         } else {
           if (data.user) setUser(data.user);
           setSuccess(true);
 
-          // Redirect after short delay
           setTimeout(() => router.push("/dashboard"), 2000);
         }
       } catch (err: any) {
-        setError(err.message || "Unknown error");
+        setError(err.message || "Something went wrong.");
       } finally {
         setLoading(false);
       }
@@ -62,17 +60,45 @@ export default function JoinWorkspacePage() {
     joinWorkspace();
   }, [token, user, setUser, router]);
 
-  if (loading) return <p className="p-4">Joining workspace...</p>;
-  if (error)
-    return (
-      <p className="p-4 text-red-500">
-        {error} <br />
-        { !user && <button onClick={() => router.push("/login")} className="text-blue-600 underline mt-2 block">Login to continue</button>}
-      </p>
-    );
-  if (success)
-    return <p className="p-4 text-green-500">Joined workspace! Redirecting...</p>;
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-950 via-gray-900 to-gray-800 text-white">
+      <div className="text-center p-6 max-w-md mx-auto">
+        {loading && (
+          <div>
+            <h1 className="text-2xl font-semibold mb-2">Joining Workspace...</h1>
+            <p className="text-gray-400">Please wait while we prepare your space ✨</p>
+          </div>
+        )}
 
-  return null;
+        {error && (
+          <div>
+            <h1 className="text-2xl font-semibold mb-2 text-red-400">Oops!</h1>
+            <p className="text-gray-300">{error}</p>
+
+            {!user && (
+              <button
+                onClick={() => router.push("/login")}
+                className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 transition rounded-md text-white font-medium"
+              >
+                Login to Continue
+              </button>
+            )}
+          </div>
+        )}
+
+        {success && (
+          <div>
+            <h1 className="text-2xl font-semibold mb-2 text-green-400">
+              Welcome aboard! 🌱
+            </h1>
+            <p className="text-gray-300">
+              You’ve successfully joined the workspace. Redirecting you shortly...
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
+
 

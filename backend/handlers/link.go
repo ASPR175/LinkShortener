@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"linkshortener/db"
 	"linkshortener/models"
 	"linkshortener/utils"
@@ -180,6 +181,7 @@ func UpdateLink(c *fiber.Ctx) error {
 
 func DeleteLink(c *fiber.Ctx) error {
 	linkID, err := primitive.ObjectIDFromHex(c.Params("id"))
+	fmt.Println("the linkid is :", linkID)
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid link ID"})
 	}

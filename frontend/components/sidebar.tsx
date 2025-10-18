@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -8,20 +9,30 @@ import { useEffect, useState } from "react";
 export default function Sidebar() {
   const workspaces = useAppStore((s) => s.workspaces);
   const currentWorkspaceId = useAppStore((s) => s.currentWorkspaceId);
+  const user = useAppStore((s) => s.user);
+  const fetchWorkspaces = useAppStore((s) => s.fetchWorkspaces);
   const pathname = usePathname();
   const [loaded, setLoaded] = useState(false);
 
   const getWsId = (ws: typeof workspaces[number]) => String(ws._id);
 
-  
-  useEffect(() => {
-    const { user, workspaces, fetchWorkspaces } = useAppStore.getState();
-    if (user && workspaces.length === 0) fetchWorkspaces(user.token);
-  }, []);
+ 
+//  useEffect(() => {
+//   if (user && workspaces.length === 0) {
+//     fetchWorkspaces(user.token);
+//   }
+// }, [user, workspaces.length, fetchWorkspaces]);
+useEffect(() => {
+  if (!user?.token) return;
 
-  
+  const { fetchWorkspaces } = useAppStore.getState();
+  fetchWorkspaces(user.token);
+}, [user?.token]);
+
+
+
   useEffect(() => {
-    if (workspaces.length > 0) setLoaded(true);
+    setLoaded(workspaces.length > 0);
   }, [workspaces]);
 
   return (
@@ -32,10 +43,7 @@ export default function Sidebar() {
         {!loaded && (
           <div className="flex flex-col gap-2 mt-4">
             {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="h-8 bg-gray-200 rounded-lg animate-pulse"
-              />
+              <div key={i} className="h-8 bg-gray-200 rounded-lg animate-pulse" />
             ))}
           </div>
         )}
@@ -47,8 +55,7 @@ export default function Sidebar() {
             workspaces.map((ws) => {
               const wsId = getWsId(ws);
               const isActive =
-                wsId === currentWorkspaceId ||
-                pathname.startsWith(`/workspace/${wsId}`);
+                wsId === currentWorkspaceId || pathname.startsWith(`/workspace/${wsId}`);
 
               return (
                 <Link
@@ -90,8 +97,3 @@ export default function Sidebar() {
     </aside>
   );
 }
-
-
-
-
-

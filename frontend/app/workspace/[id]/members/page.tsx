@@ -38,13 +38,7 @@ export default function MembersPage() {
         const inviteData = await inviteRes.json();
 
         
-        // setMembers(
-        //   (memberData.members || []).map((m: any) => ({
-        //     ...m,
-        //     _id: typeof m._id === "object" && m._id.Data ? m._id.Data : m._id,
-        //     userId: typeof m.userId === "object" && m.userId.Data ? m.userId.Data : m.userId,
-        //   }))
-        // );
+      
         const normalizeMember = (m: any): Member => ({
   _id: typeof m._id === "object" && m._id.Data ? m._id.Data : m._id,
   userId: typeof m.userId === "object" && m.userId.Data ? m.userId.Data : m.userId,
@@ -68,10 +62,11 @@ setMembers((memberData.members || []).map(normalizeMember));
 
   const updateRole = async (userId: string, role: "member" | "admin") => {
     if (!workspaceId || !user?.token) return;
-    const encodedUserId = encodeURIComponent(userId); 
+    // const encodedUserId = encodeURIComponent(userId); 
+  console.log("the userId is :",userId)
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/workspace/${workspaceId}/members/${encodedUserId}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/workspace/${workspaceId}/members/${userId}`,
         {
           method: "PATCH",
           headers: {
@@ -95,10 +90,11 @@ setMembers((memberData.members || []).map(normalizeMember));
 
   const removeMember = async (userId: string) => {
     if (!workspaceId || !user?.token) return;
-    const encodedUserId = encodeURIComponent(userId); 
+    
+    // const encodedUserId = encodeURIComponent(userId); 
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/workspace/${workspaceId}/members/${encodedUserId}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/workspace/${workspaceId}/members/${userId}`,
         { method: "DELETE", headers: { Authorization: `Bearer ${user.token}` } }
       );
       if (res.ok) setMembers(prev => prev.filter(m => m.userId !== userId));

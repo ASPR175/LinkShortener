@@ -26,17 +26,33 @@ export default function WorkspacePage() {
   const [toast, setToast] = useState("");
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [confirmEditId, setConfirmEditId] = useState<string | null>(null);
-
+const [workspace, setWorkspace] = useState<any>(null);
   const workspaceId: string | null =
     Array.isArray(params.id) ? params.id[0] : params.id ?? null;
 
-  const workspace = workspaceId
-    ? workspaces.find((w) => w._id === workspaceId) ?? null
-    : null;
+  // const workspace = workspaceId
+  //   ? workspaces.find((w) => w._id === workspaceId) ?? null
+  //   : null;
 console.log("workspace state", workspace);
 console.log("links", workspace?.links);
 
  
+// useEffect(() => {
+//   if (!workspaceId || !token) return;
+
+//   setLoading(true);
+//   (async () => {
+//     try {
+//       const { fetchWorkspaceDetail, setCurrentWorkspace } = useAppStore.getState();
+//       await fetchWorkspaceDetail(workspaceId, token);
+//       setCurrentWorkspace(workspaceId);
+//     } catch (err) {
+//       console.error(err);
+//     } finally {
+//       setLoading(false);
+//     }
+//   })();
+// }, [workspaceId, token]);
 useEffect(() => {
   if (!workspaceId || !token) return;
 
@@ -44,10 +60,11 @@ useEffect(() => {
   (async () => {
     try {
       const { fetchWorkspaceDetail, setCurrentWorkspace } = useAppStore.getState();
-      await fetchWorkspaceDetail(workspaceId, token);
+      const ws = await fetchWorkspaceDetail(workspaceId, token);
+      setWorkspace(ws); // isolate data locally
       setCurrentWorkspace(workspaceId);
     } catch (err) {
-      console.error(err);
+      console.error("Workspace fetch failed:", err);
     } finally {
       setLoading(false);
     }
